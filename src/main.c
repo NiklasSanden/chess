@@ -3,6 +3,7 @@
 
 #include "data.h"
 #include "rules.h"
+#include "ai.h"
 
 int main()
 {

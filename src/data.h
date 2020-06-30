@@ -9,11 +9,11 @@ typedef enum EColour
     Black,
 } Colour;
 
-// OutsidePiece = 0
+// OutsideSquare = 0
 typedef enum EPiece
 {
-    OutsidePiece,
-    EmptyPiece,
+    OutsideSquare,
+    EmptySquare,
     WhitePawn, WhiteUnmovedPawn, WhiteEnPassantPawn,
     WhiteRook, WhiteUnmovedRook,
     WhiteKnight,
@@ -31,19 +31,21 @@ typedef enum EPiece
 typedef struct
 {
     char board[8][8];
+    float value;
     int whiteKing;
     int blackKing;
+    bool isWhiteTurn;
 } Board;
 
 Piece GetPiece(const Board* const board, const int x, const int y)
 {
-    if (x < 0 || x > 7 || y < 0 || y > 7) return OutsidePiece;
+    if (x < 0 || x > 7 || y < 0 || y > 7) return OutsideSquare;
     return (Piece)board->board[x][y];
 }
 
 Colour GetColour(const Piece piece)
 {
-    if (piece <= EmptyPiece) return NoColour;
+    if (piece <= EmptySquare) return NoColour;
     else if (piece < BlackPawn) return White;
     else return Black;
 }

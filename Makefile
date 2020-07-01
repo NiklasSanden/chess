@@ -3,13 +3,17 @@ SOURCE_PATH = /home/nick/Dev/chess/src
 CFLAGS = -I$(SOURCE_PATH)
 
 SOURCE = \
-src/main.c\
+src/main.c \
+src/rules.c \
+src/data.c \
+src/ai.c \
+src/utility.c
 
 debug:
 	gcc $(CFLAGS) -D DEBUG_LOGGING -o bin/debug/Chess.sh $(SOURCE)
 
 release:
-	gcc $(CFLAGS) -o bin/release/Chess.sh $(SOURCE)
+	gcc $(CFLAGS) -O3 -o bin/release/Chess.sh $(SOURCE)
 
 .PHONY: test clean
 

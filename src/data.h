@@ -1,5 +1,7 @@
-#ifndef CHESS_DATA
-#define CHESS_DATA
+#ifndef DATA_H
+#define DATA_H
+
+#include <stdbool.h>
 
 // NoColour = 0
 typedef enum EColour
@@ -14,13 +16,13 @@ typedef enum EPiece
 {
     OutsideSquare,
     EmptySquare,
-    WhitePawn, WhiteUnmovedPawn, WhiteEnPassantPawn,
+    WhitePawn, WhiteUnmovedPawn,
     WhiteRook, WhiteUnmovedRook,
     WhiteKnight,
     WhiteBishop,
     WhiteQueen,
     WhiteKing, WhiteUnmovedKing,
-    BlackPawn, BlackUnmovedPawn, BlackEnPassantPawn,
+    BlackPawn, BlackUnmovedPawn,
     BlackRook, BlackUnmovedRook,
     BlackKnight,
     BlackBishop,
@@ -28,37 +30,28 @@ typedef enum EPiece
     BlackKing, BlackUnmovedKing,
 } Piece;
 
+// Stalemate = 0
+typedef enum EGameEndStatus
+{
+    Stalemate,
+    Checkmate
+} GameEndStatus;
+
 typedef struct
 {
-    char board[8][8];
+    char board[64];
     float value;
-    int whiteKing;
-    int blackKing;
-    bool isWhiteTurn;
+    int whiteKingIndex; // Init 4
+    int blackKingIndex; // Init 60
+    int enPassantIndex; // Init -1. There can only be one pawn that can be attacked with en passant at a time. Needs to be reset to -1 when there isn't one
+    bool isWhiteTurn;   // Init true
 } Board;
+Board InitializeBoard();
 
-Piece GetPiece(const Board* const board, const int x, const int y)
-{
-    if (x < 0 || x > 7 || y < 0 || y > 7) return OutsideSquare;
-    return (Piece)board->board[x][y];
-}
-
-Colour GetColour(const Piece piece)
-{
-    if (piece <= EmptySquare) return NoColour;
-    else if (piece < BlackPawn) return White;
-    else return Black;
-}
-
-int PositionToIndex(const int x, const int y)
-{
-    return y * 8 + x;
-}
-
-void IndexToPosition(const int index, int* const outX, int* const outY)
-{
-    (*outX) = index % 8;
-    (*outY) = index / 8;
-}
+int PositionToIndex(const int x, const int y);
+void IndexToPosition(const int index, int* const outX, int* const outY);
+Piece GetPiece(const Board* const board, const int x, const int y);
+void SetPiece(Board* const board, const int x, const int y, const Piece piece);
+Colour GetColour(const Piece piece);
 
 #endif

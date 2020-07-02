@@ -548,11 +548,15 @@ Board* GenerateAllLegalMoves(Board* const board, int* const outAmountOfMoves)
         }
     }
 
-    Board* moves = malloc(sizeof(*moves) * (*outAmountOfMoves));
-    assert(moves && "In GenerateAllLegalMoves: Failed to allocate memory for moves");
-    for (int i = 0; i < *outAmountOfMoves; ++i)
+    Board* moves = NULL;
+    if (*outAmountOfMoves > 0)
     {
-        moves[i] = newMoves[i];
+        moves = malloc(sizeof(*moves) * (*outAmountOfMoves));
+        assert(moves && "In GenerateAllLegalMoves: Failed to allocate memory for moves");
+        for (int i = 0; i < *outAmountOfMoves; ++i)
+        {
+            moves[i] = newMoves[i];
+        }
     }
 
     return moves;

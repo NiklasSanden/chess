@@ -3,14 +3,16 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
+#include <float.h>
 
 #include "data.h"
 #include "rules.h"
 #include "utility.h"
 
-int GetMaterialValue(const Board* const board)
+// TODO: Add position based points (dictionaries)
+float GetBoardValue(const Board* const board)
 {
-    int value = 0;
+    float value = 0.0f;
     for (int i = 0; i < 64; ++i)
     {
         switch (board->board[i])
@@ -18,38 +20,38 @@ int GetMaterialValue(const Board* const board)
         // White
         case WhitePawn:
         case WhiteUnmovedPawn:
-            value += 1;
+            value += 10.0f;
             break;
         case WhiteRook:
         case WhiteUnmovedRook:
-            value += 5;
+            value += 50.0f;
             break;
         case WhiteKnight:
-            value += 3;
+            value += 30.0f;
             break;
         case WhiteBishop:
-            value += 3;
+            value += 30.0f;
             break;
         case WhiteQueen:
-            value += 9;
+            value += 90.0f;
             break;
         // Black
         case BlackPawn:
         case BlackUnmovedPawn:
-            value -= 1;
+            value -= 10.0f;
             break;
         case BlackRook:
         case BlackUnmovedRook:
-            value -= 5;
+            value -= 50.0f;
             break;
         case BlackKnight:
-            value -= 3;
+            value -= 30.0f;
             break;
         case BlackBishop:
-            value -= 3;
+            value -= 30.0f;
             break;
         case BlackQueen:
-            value -= 9;
+            value -= 90.0f;
             break;
         default: // King and empty square
             break;
@@ -59,8 +61,83 @@ int GetMaterialValue(const Board* const board)
     return value;
 }
 
+Board Minimax(Board* const board, const int maxDepth, const int depth, const bool isMaximizing)
+{
+    Board returnBoard;
+    // Static evaluation for leaves
+    if (depth == maxDepth)
+    {
+        returnBoard = *board;
+        returnBoard.value = GetBoardValue(&returnBoard);
+        return returnBoard;
+    }
+
+
+    int allPossibleMovesCount;
+    Board* allPossibleMoves = GenerateAllLegalMoves(board, &allPossibleMovesCount);
+
+    // If the game is over (no need to free allPossibleMoves since it points to NULL if allPossibleMovesCount = 0)
+    if (allPossibleMovesCount == 0)
+    {
+        returnBoard = *board;
+        if (GetResultOfGameIfNoMovesAreAvailable(board) == Stalemate)
+        {
+            returnBoard.value = 0.0f;
+        }
+        else
+        {
+            returnBoard.value = isMaximizing ? FLT_MIN : FLT_MAX;
+        }
+        return returnBoard;
+    }
+
+    // Value child nodes
+    Board followingMinimaxBoards[allPossibleMovesCount];
+    for (int i = 0; i < allPossibleMovesCount; ++i)
+    {
+        followingMinimaxBoards[i] = Minimax(&allPossibleMoves[i], maxDepth, depth + 1, !isMaximizing);
+    }
+
+    // Order them and pick the best one
+    int bestIndex = 0;
+    float bestValue = isMaximizing ? -FLT_MAX : FLT_MAX;
+    for (int i = 0; i < allPossibleMovesCount; ++i)
+    {
+        if ((isMaximizing && followingMinimaxBoards[i].value > bestValue) || (!isMaximizing && followingMinimaxBoards[i].value < bestValue))
+        {
+            bestValue = followingMinimaxBoards[i].value;
+            bestIndex = i;
+        }
+    }
+
+    returnBoard = allPossibleMoves[bestIndex];
+    returnBoard.value = bestValue;
+    free(allPossibleMoves);
+    return returnBoard;
+}
+
 void Test()
 {
+    Board board = InitializeBoard();
+    PrintBoard(&board);
+    while (board.value != -FLT_MAX && board.value != FLT_MAX)
+    {
+        board = Minimax(&board, 4, 0, board.isWhiteTurn);
+        PrintBoard(&board);
+        fflush(stdout);
+    }
+    printf("Board value: %f - Result: ", GetBoardValue(&board));
+    if (GetResultOfGameIfNoMovesAreAvailable(&board) == Stalemate)
+    {
+        printf("Stalemate!\n");
+    }
+    else
+    {
+        if (board.isWhiteTurn) printf("Black won!\n");
+        else                   printf("White won!\n");
+    }
+
+    // Test board
     /*Board newTest = InitializeTestBoard();
     int count;
     Board* a = GenerateAllLegalMoves(&newTest, &count);
@@ -88,6 +165,7 @@ void Test()
     }
     printf("%i\n", leaves);*/
 
+    // First 6 moves
     /*clock_t start, end;
     double cpu_time_used;
 

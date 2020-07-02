@@ -41,7 +41,17 @@ void PrintBoard(const Board* const board)
     {
         for (int x = 0; x < 8; ++x)
         {
-            printf("%c", GetPieceChar(GetPiece(board, x, y)));
+            Piece piece = GetPiece(board, x, y);
+            if (GetColour(piece) == Black)
+            {
+                printf("\033[0;34m");
+                printf("%c", GetPieceChar(piece));
+                printf("\033[0m");
+            }
+            else
+            {
+                printf("%c", GetPieceChar(piece));
+            }
         }
         printf("%c", '\n');
     }

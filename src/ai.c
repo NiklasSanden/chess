@@ -9,51 +9,134 @@
 #include "rules.h"
 #include "utility.h"
 
-// TODO: Add position based points (dictionaries)
+// Position Dictionaries
+static const float PawnPositionValues[] = {
+     0,  0,  0,  0,  0,  0,  0,  0,
+    50, 50, 50, 50, 50, 50, 50, 50,
+    10, 10, 20, 30, 30, 20, 10, 10,
+     5,  5, 10, 25, 25, 10,  5,  5,
+     0,  0,  0, 20, 20,  0,  0,  0,
+     5, -5,-10,  0,  0,-10, -5,  5,
+     5, 10, 10,-20,-20, 10, 10,  5,
+     0,  0,  0,  0,  0,  0,  0,  0
+};
+static const float KnightPositionValues[] = {
+    -50,-40,-30,-30,-30,-30,-40,-50,
+    -40,-20,  0,  0,  0,  0,-20,-40,
+    -30,  0, 10, 15, 15, 10,  0,-30,
+    -30,  5, 15, 20, 20, 15,  5,-30,
+    -30,  0, 15, 20, 20, 15,  0,-30,
+    -30,  5, 10, 15, 15, 10,  5,-30,
+    -40,-20,  0,  5,  5,  0,-20,-40,
+    -50,-40,-30,-30,-30,-30,-40,-50,
+};
+static const float BishopPositionValues[] = {
+    -20,-10,-10,-10,-10,-10,-10,-20,
+    -10,  0,  0,  0,  0,  0,  0,-10,
+    -10,  0,  5, 10, 10,  5,  0,-10,
+    -10,  5,  5, 10, 10,  5,  5,-10,
+    -10,  0, 10, 10, 10, 10,  0,-10,
+    -10, 10, 10, 10, 10, 10, 10,-10,
+    -10,  5,  0,  0,  0,  0,  5,-10,
+    -20,-10,-10,-10,-10,-10,-10,-20,
+};
+static const float RookPositionValues[] = {
+      0,  0,  0,  0,  0,  0,  0,  0,
+      5, 10, 10, 10, 10, 10, 10,  5,
+     -5,  0,  0,  0,  0,  0,  0, -5,
+     -5,  0,  0,  0,  0,  0,  0, -5,
+     -5,  0,  0,  0,  0,  0,  0, -5,
+     -5,  0,  0,  0,  0,  0,  0, -5,
+     -5,  0,  0,  0,  0,  0,  0, -5,
+      0,  0,  0,  5,  5,  0,  0,  0
+};
+static const float QueenPositionValues[] = {
+    -20,-10,-10, -5, -5,-10,-10,-20,
+    -10,  0,  0,  0,  0,  0,  0,-10,
+    -10,  0,  5,  5,  5,  5,  0,-10,
+     -5,  0,  5,  5,  5,  5,  0, -5,
+      0,  0,  5,  5,  5,  5,  0, -5,
+    -10,  5,  5,  5,  5,  5,  0,-10,
+    -10,  0,  5,  0,  0,  0,  0,-10,
+    -20,-10,-10, -5, -5,-10,-10,-20
+};
+static const float KingPositionValues[] = {
+    -30,-40,-40,-50,-50,-40,-40,-30,
+    -30,-40,-40,-50,-50,-40,-40,-30,
+    -30,-40,-40,-50,-50,-40,-40,-30,
+    -30,-40,-40,-50,-50,-40,-40,-30,
+    -20,-30,-30,-40,-40,-30,-30,-20,
+    -10,-20,-20,-20,-20,-20,-20,-10,
+     20, 20,  0,  0,  0,  0, 20, 20,
+     20, 30, 10,  0,  0, 10, 30, 20
+};
+
+
 float GetBoardValue(const Board* const board)
 {
     float value = 0.0f;
     for (int i = 0; i < 64; ++i)
     {
+        int x, y;
+        IndexToPosition(i, &x, &y);
+        y = 7 - y;
         switch (board->board[i])
         {
         // White
         case WhitePawn:
         case WhiteUnmovedPawn:
-            value += 10.0f;
+            value += 100.0f;
+            value += PawnPositionValues[PositionToIndex(x, y)];
             break;
         case WhiteRook:
         case WhiteUnmovedRook:
-            value += 50.0f;
+            value += 500.0f;
+            value += RookPositionValues[PositionToIndex(x, y)];
             break;
         case WhiteKnight:
-            value += 30.0f;
+            value += 320.0f;
+            value += KnightPositionValues[PositionToIndex(x, y)];
             break;
         case WhiteBishop:
-            value += 30.0f;
+            value += 330.0f;
+            value += BishopPositionValues[PositionToIndex(x, y)];
             break;
         case WhiteQueen:
-            value += 90.0f;
+            value += 900.0f;
+            value += QueenPositionValues[PositionToIndex(x, y)];
+            break;
+        case WhiteKing:
+        case WhiteUnmovedKing:
+            value += KingPositionValues[i];
             break;
         // Black
         case BlackPawn:
         case BlackUnmovedPawn:
-            value -= 10.0f;
+            value -= 100.0f;
+            value -= PawnPositionValues[i];
             break;
         case BlackRook:
         case BlackUnmovedRook:
-            value -= 50.0f;
+            value -= 500.0f;
+            value -= RookPositionValues[i];
             break;
         case BlackKnight:
-            value -= 30.0f;
+            value -= 320.0f;
+            value -= KnightPositionValues[i];
             break;
         case BlackBishop:
-            value -= 30.0f;
+            value -= 330.0f;
+            value -= BishopPositionValues[i];
             break;
         case BlackQueen:
-            value -= 90.0f;
+            value -= 900.0f;
+            value -= QueenPositionValues[i];
             break;
-        default: // King and empty square
+        case BlackKing:
+        case BlackUnmovedKing:
+            value -= KingPositionValues[i];
+            break;
+        default: // Empty Square
             break;
         }
     }
@@ -91,6 +174,8 @@ Board Minimax(const Board* const board, const int maxDepth, const int depth, con
         return returnBoard;
     }
 
+    // TODO Order child nodes
+
     // Value child nodes
     Board followingMinimaxBoards[allPossibleMovesCount];
     for (int i = 0; i < allPossibleMovesCount; ++i)
@@ -118,7 +203,7 @@ Board Minimax(const Board* const board, const int maxDepth, const int depth, con
 
 void Test()
 {
-    /*Board board = InitializeBoard();
+    Board board = InitializeBoard();
     PrintBoard(&board);
     while (board.value != -FLT_MAX && board.value != FLT_MAX)
     {
@@ -135,7 +220,7 @@ void Test()
     {
         if (board.isWhiteTurn) printf("Black won!\n");
         else                   printf("White won!\n");
-    }*/
+    }
 
     // Test board
     /*Board newTest = InitializeTestBoard();
@@ -166,7 +251,7 @@ void Test()
     printf("%i\n", leaves);*/
 
     // First 6 moves
-    clock_t start, end;
+    /*clock_t start, end;
     double cpu_time_used;
 
     start = clock();
@@ -217,5 +302,5 @@ void Test()
     end = clock();
     cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
     printf("Nodes: %lli - Leaves: %lli - Time: %f\n", nodes, leaves, cpu_time_used);
-    fflush(stdout);
+    fflush(stdout);*/
 }

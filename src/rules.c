@@ -136,9 +136,9 @@ void MovePiece(Board* const board, const int xStart, const int yStart, const int
     SetPiece(board, xEnd, yEnd, piece);
     SetPiece(board, xStart, yStart, EmptySquare);
 }
-void MoveKing(Board* const board, const int xStart, const int yStart, const int xEnd, const int yEnd, const Colour colour)
+void MoveKing(Board* const board, const int xStart, const int yStart, const int xEnd, const int yEnd, const Colour teamColour)
 {
-    if (colour == White)
+    if (teamColour == White)
     {
         MovePiece(board, xStart, yStart, xEnd, yEnd);
         SetPiece(board, xEnd, yEnd, WhiteKing);
@@ -151,8 +151,8 @@ void MoveKing(Board* const board, const int xStart, const int yStart, const int 
         board->blackKingIndex = PositionToIndex(xEnd, yEnd);
     }
 }
-    // Deals with En Passant. promotionOrNormalMovedPawn will be the piece you want to promote to if you are promoting, or alternatively just White/BlackPawn. Therefore unmoved is removed automatically
-void MovePawn(Board* const board, const int xStart, const int yStart, const int xEnd, const int yEnd, const Piece promotionOrNormalMovedPawn)
+    // Deals with En Passant. This will promote if you land on that rank. Unmoved gets removed by the parameters
+void MovePawn(Board* const board, const int xStart, const int yStart, const int xEnd, const int yEnd, const Piece normalMovedPawn, const Piece promotionPiece)
 {
     // Double first enables En Passant
     if (abs(yStart - yEnd) == 2)
@@ -160,7 +160,15 @@ void MovePawn(Board* const board, const int xStart, const int yStart, const int 
         board->enPassantIndex = PositionToIndex(xEnd, yEnd);
     }
     MovePiece(board, xStart, yStart, xEnd, yEnd);
-    SetPiece(board, xEnd, yEnd, promotionOrNormalMovedPawn); // no need to handle colours separately because of this
+    // promotion
+    if (yEnd == 7 || yEnd == 0)
+    {
+        SetPiece(board, xEnd, yEnd, promotionPiece); // no need to handle colours separately because of this
+    }
+    else
+    {
+        SetPiece(board, xEnd, yEnd, normalMovedPawn);
+    }
 }
     // normalMovedRook should have the correct colour and handles removing unmoved automatically
 void MoveRook(Board* const board, const int xStart, const int yStart, const int xEnd, const int yEnd, const Piece normalMovedRook)
@@ -172,33 +180,33 @@ void MoveRook(Board* const board, const int xStart, const int yStart, const int 
 
 // Generate Moves Helper
 
-void AddNormalMoveIfLegal(const Board* const board, int* const outAmountOfMoves, Board* const newBoard, const int xOld, const int yOld, const int x, const int y, const Colour colour)
+void AddNormalMoveIfLegal(const Board* const board, Board* const newMoves, int* const outAmountOfMoves, const int xStart, const int yStart, const int xEnd, const int yEnd, const Colour teamColour)
 {
-    if (!IsSquareBlockedOrOutside(board, x , y, colour))
+    if (!IsSquareBlockedOrOutside(board, xEnd , yEnd, teamColour))
     {
-        *newBoard = *board;
-        MovePiece(newBoard, xOld, yOld, x, y);
-        if (!IsColourInCheck(newBoard, colour))
+        newMoves[*outAmountOfMoves] = *board;
+        MovePiece(&newMoves[*outAmountOfMoves], xStart, yStart, xEnd, yEnd);
+        if (!IsColourInCheck(&newMoves[*outAmountOfMoves], teamColour))
         {
             ++(*outAmountOfMoves);
         }
     }
 }
 
-void AddKingMoveIfLegal(const Board* const board, int* const outAmountOfMoves, Board* const newBoard, const int xOld, const int yOld, const int x, const int y, const Colour colour)
+void AddKingMoveIfLegal(const Board* const board, Board* const newMoves, int* const outAmountOfMoves, const int xStart, const int yStart, const int xEnd, const int yEnd, const Colour teamColour)
 {
-    if (!IsSquareBlockedOrOutside(board, x , y, colour))
+    if (!IsSquareBlockedOrOutside(board, xEnd , yEnd, teamColour))
     {
-        *newBoard = *board;
-        MoveKing(newBoard, xOld, yOld, x, y, colour);
-        if (!IsColourInCheck(newBoard, colour))
+        newMoves[*outAmountOfMoves] = *board;
+        MoveKing(&newMoves[*outAmountOfMoves], xStart, yStart, xEnd, yEnd, teamColour);
+        if (!IsColourInCheck(&newMoves[*outAmountOfMoves], teamColour))
         {
             ++(*outAmountOfMoves);
         }
     }
 }
 
-void AddMovesAlongDirectionIfLegal(const Board* const board, int* const outAmountOfMoves, Board* const moves, const int x, const int y, const int xIncrement, const int yIncrement, const Colour colour, const Colour oppositeColour)
+void AddMovesAlongDirectionIfLegal(const Board* const board, Board* const newMoves, int* const outAmountOfMoves, const int x, const int y, const int xIncrement, const int yIncrement, const Colour teamColour, const Colour oppositeColour)
 {
     Piece piece;
     Colour pieceColour;
@@ -209,9 +217,9 @@ void AddMovesAlongDirectionIfLegal(const Board* const board, int* const outAmoun
         pieceColour = GetColour(piece);
         if (piece == EmptySquare || pieceColour == oppositeColour)
         {
-            moves[*outAmountOfMoves] = *board;
-            MovePiece(&moves[*outAmountOfMoves], x, y, x + xIncrement * i, y + yIncrement * i);
-            if (!IsColourInCheck(&moves[*outAmountOfMoves], colour))
+            newMoves[*outAmountOfMoves] = *board;
+            MovePiece(&newMoves[*outAmountOfMoves], x, y, x + xIncrement * i, y + yIncrement * i);
+            if (!IsColourInCheck(&newMoves[*outAmountOfMoves], teamColour))
             {
                 ++(*outAmountOfMoves);
             }
@@ -225,7 +233,7 @@ void AddMovesAlongDirectionIfLegal(const Board* const board, int* const outAmoun
     } while (pieceColour != oppositeColour);
 }
 
-void AddRookMovesAlongDirectionIfLegal(const Board* const board, int* const outAmountOfMoves, Board* const moves, const int x, const int y, const int xIncrement, const int yIncrement, const Colour colour, const Colour oppositeColour, const Piece normalMovedRook)
+void AddRookMovesAlongDirectionIfLegal(const Board* const board, Board* const newMoves, int* const outAmountOfMoves, const int x, const int y, const int xIncrement, const int yIncrement, const Colour teamColour, const Colour oppositeColour, const Piece normalMovedRook)
 {
     Piece piece;
     Colour pieceColour;
@@ -236,9 +244,9 @@ void AddRookMovesAlongDirectionIfLegal(const Board* const board, int* const outA
         pieceColour = GetColour(piece);
         if (piece == EmptySquare || pieceColour == oppositeColour)
         {
-            moves[*outAmountOfMoves] = *board;
-            MoveRook(&moves[*outAmountOfMoves], x, y, x + xIncrement * i, y + yIncrement * i, normalMovedRook);
-            if (!IsColourInCheck(&moves[*outAmountOfMoves], colour))
+            newMoves[*outAmountOfMoves] = *board;
+            MoveRook(&newMoves[*outAmountOfMoves], x, y, x + xIncrement * i, y + yIncrement * i, normalMovedRook);
+            if (!IsColourInCheck(&newMoves[*outAmountOfMoves], teamColour))
             {
                 ++(*outAmountOfMoves);
             }
@@ -255,22 +263,22 @@ void AddRookMovesAlongDirectionIfLegal(const Board* const board, int* const outA
 
 // Generate Moves
 
-void GenerateLegalMovesForKing(const Board* const board, Board* const newBoard, int* const outAmountOfMoves, const int x, const int y, const Colour colour, const Colour oppositeColour)
+void GenerateLegalMovesForKing(const Board* const board, Board* const newMoves, int* const outAmountOfMoves, const int x, const int y, const Colour teamColour, const Colour oppositeColour)
 {
     // Normal moves
-    AddKingMoveIfLegal(board, outAmountOfMoves, &newBoard[*outAmountOfMoves], x, y, x + 1, y, colour);
-    AddKingMoveIfLegal(board, outAmountOfMoves, &newBoard[*outAmountOfMoves], x, y, x - 1, y, colour);
-    AddKingMoveIfLegal(board, outAmountOfMoves, &newBoard[*outAmountOfMoves], x, y, x, y + 1, colour);
-    AddKingMoveIfLegal(board, outAmountOfMoves, &newBoard[*outAmountOfMoves], x, y, x, y - 1, colour);
-    AddKingMoveIfLegal(board, outAmountOfMoves, &newBoard[*outAmountOfMoves], x, y, x + 1, y + 1, colour);
-    AddKingMoveIfLegal(board, outAmountOfMoves, &newBoard[*outAmountOfMoves], x, y, x + 1, y - 1, colour);
-    AddKingMoveIfLegal(board, outAmountOfMoves, &newBoard[*outAmountOfMoves], x, y, x - 1, y + 1, colour);
-    AddKingMoveIfLegal(board, outAmountOfMoves, &newBoard[*outAmountOfMoves], x, y, x - 1, y - 1, colour);
+    AddKingMoveIfLegal(board, newMoves, outAmountOfMoves, x, y, x + 1, y, teamColour);
+    AddKingMoveIfLegal(board, newMoves, outAmountOfMoves, x, y, x - 1, y, teamColour);
+    AddKingMoveIfLegal(board, newMoves, outAmountOfMoves, x, y, x, y + 1, teamColour);
+    AddKingMoveIfLegal(board, newMoves, outAmountOfMoves, x, y, x, y - 1, teamColour);
+    AddKingMoveIfLegal(board, newMoves, outAmountOfMoves, x, y, x + 1, y + 1, teamColour);
+    AddKingMoveIfLegal(board, newMoves, outAmountOfMoves, x, y, x + 1, y - 1, teamColour);
+    AddKingMoveIfLegal(board, newMoves, outAmountOfMoves, x, y, x - 1, y + 1, teamColour);
+    AddKingMoveIfLegal(board, newMoves, outAmountOfMoves, x, y, x - 1, y - 1, teamColour);
 
-    if (!IsColourInCheck(board, colour))
+    if (!IsColourInCheck(board, teamColour))
     {
         // Castling king-side
-        if (colour == White)
+        if (teamColour == White)
         {
             if (GetPiece(board, x, y) == WhiteUnmovedKing && GetPiece(board, 7, 0) == WhiteUnmovedRook)
             {
@@ -278,9 +286,9 @@ void GenerateLegalMovesForKing(const Board* const board, Board* const newBoard, 
                 {
                     if (!IsPositionAttackedByColour(board, x + 1, y, Black) && !IsPositionAttackedByColour(board, x + 2, y, Black))
                     {
-                        newBoard[*outAmountOfMoves] = *board;
-                        MoveKing(&newBoard[*outAmountOfMoves], x, y, x + 2, y, colour);
-                        MoveRook(&newBoard[*outAmountOfMoves], 7, 0, 5, 0, WhiteRook);
+                        newMoves[*outAmountOfMoves] = *board;
+                        MoveKing(&newMoves[*outAmountOfMoves], x, y, x + 2, y, teamColour);
+                        MoveRook(&newMoves[*outAmountOfMoves], 7, 0, 5, 0, WhiteRook);
                         ++(*outAmountOfMoves);
                     }
                 }
@@ -294,9 +302,9 @@ void GenerateLegalMovesForKing(const Board* const board, Board* const newBoard, 
                 {
                     if (!IsPositionAttackedByColour(board, x + 1, y, White) && !IsPositionAttackedByColour(board, x + 2, y, White))
                     {
-                        newBoard[*outAmountOfMoves] = *board;
-                        MoveKing(&newBoard[*outAmountOfMoves], x, y, x + 2, y, colour);
-                        MoveRook(&newBoard[*outAmountOfMoves], 7, 7, 5, 7, BlackRook);
+                        newMoves[*outAmountOfMoves] = *board;
+                        MoveKing(&newMoves[*outAmountOfMoves], x, y, x + 2, y, teamColour);
+                        MoveRook(&newMoves[*outAmountOfMoves], 7, 7, 5, 7, BlackRook);
                         ++(*outAmountOfMoves);
                     }
                 }
@@ -304,7 +312,7 @@ void GenerateLegalMovesForKing(const Board* const board, Board* const newBoard, 
         }
         
         // Castling queen-side
-        if (colour == White)
+        if (teamColour == White)
         {
             if (GetPiece(board, x, y) == WhiteUnmovedKing && GetPiece(board, 0, 0) == WhiteUnmovedRook)
             {
@@ -312,9 +320,9 @@ void GenerateLegalMovesForKing(const Board* const board, Board* const newBoard, 
                 {
                     if (!IsPositionAttackedByColour(board, x - 1, y, Black) && !IsPositionAttackedByColour(board, x - 2, y, Black))
                     {
-                        newBoard[*outAmountOfMoves] = *board;
-                        MoveKing(&newBoard[*outAmountOfMoves], x, y, x - 2, y, colour);
-                        MoveRook(&newBoard[*outAmountOfMoves], 0, 0, 3, 0, WhiteRook);
+                        newMoves[*outAmountOfMoves] = *board;
+                        MoveKing(&newMoves[*outAmountOfMoves], x, y, x - 2, y, teamColour);
+                        MoveRook(&newMoves[*outAmountOfMoves], 0, 0, 3, 0, WhiteRook);
                         ++(*outAmountOfMoves);
                     }
                 }
@@ -328,9 +336,9 @@ void GenerateLegalMovesForKing(const Board* const board, Board* const newBoard, 
                 {
                     if (!IsPositionAttackedByColour(board, x - 1, y, White) && !IsPositionAttackedByColour(board, x - 2, y, White))
                     {
-                        newBoard[*outAmountOfMoves] = *board;
-                        MoveKing(&newBoard[*outAmountOfMoves], x, y, x - 2, y, colour);
-                        MoveRook(&newBoard[*outAmountOfMoves], 0, 7, 3, 7, BlackRook);
+                        newMoves[*outAmountOfMoves] = *board;
+                        MoveKing(&newMoves[*outAmountOfMoves], x, y, x - 2, y, teamColour);
+                        MoveRook(&newMoves[*outAmountOfMoves], 0, 7, 3, 7, BlackRook);
                         ++(*outAmountOfMoves);
                     }
                 }
@@ -340,7 +348,7 @@ void GenerateLegalMovesForKing(const Board* const board, Board* const newBoard, 
 }
     
     // Currently always promotes to a queen
-void GenerateLegalMovesForPawn(const Board* const board, Board* const newBoard, int* const outAmountOfMoves, const int x, const int y, const Colour colour, const Colour oppositeColour)
+void GenerateLegalMovesForPawn(const Board* const board, Board* const newMoves, int* const outAmountOfMoves, const int x, const int y, const Colour teamColour, const Colour oppositeColour)
 {
     // En Passant position
     int enPassantX, enPassantY;
@@ -349,27 +357,17 @@ void GenerateLegalMovesForPawn(const Board* const board, Board* const newBoard, 
         IndexToPosition(board->enPassantIndex, &enPassantX, &enPassantY);
     }
 
-    int forwardDirection = colour == White ? 1 : -1;
-    int promotionLine = colour == White ? 6 : 1;
-    Piece pawnPiece = colour == White ? WhitePawn : BlackPawn;
-    Piece unmovedPawnPiece = colour == White ? WhiteUnmovedPawn : BlackUnmovedPawn;
-    Piece promotionPiece = colour == White ? WhiteQueen : BlackQueen;
+    int forwardDirection = teamColour == White ? 1 : -1;
+    Piece pawnPiece = teamColour == White ? WhitePawn : BlackPawn;
+    Piece unmovedPawnPiece = teamColour == White ? WhiteUnmovedPawn : BlackUnmovedPawn;
+    Piece promotionPiece = teamColour == White ? WhiteQueen : BlackQueen;
     // Moves
     // Forward 1
     if (GetPiece(board, x, y + forwardDirection) == EmptySquare)
     {
-        newBoard[*outAmountOfMoves] = *board;
-        // promotion
-        if (y == promotionLine)
-        {
-            MovePawn(&newBoard[*outAmountOfMoves], x, y, x, y + forwardDirection, promotionPiece);
-        } 
-        else
-        {
-            MovePawn(&newBoard[*outAmountOfMoves], x, y, x, y + forwardDirection, pawnPiece);
-        }
-
-        if (!IsColourInCheck(&newBoard[*outAmountOfMoves], colour))
+        newMoves[*outAmountOfMoves] = *board;
+        MovePawn(&newMoves[*outAmountOfMoves], x, y, x, y + forwardDirection, pawnPiece, promotionPiece);
+        if (!IsColourInCheck(&newMoves[*outAmountOfMoves], teamColour))
         {
             ++(*outAmountOfMoves);
         }
@@ -380,9 +378,9 @@ void GenerateLegalMovesForPawn(const Board* const board, Board* const newBoard, 
     {
         if (GetPiece(board, x, y + forwardDirection) == EmptySquare && GetPiece(board, x, y + 2 * forwardDirection) == EmptySquare)
         {
-            newBoard[*outAmountOfMoves] = *board;
-            MovePawn(&newBoard[*outAmountOfMoves], x, y, x, y + 2 * forwardDirection, pawnPiece);
-            if (!IsColourInCheck(&newBoard[*outAmountOfMoves], colour))
+            newMoves[*outAmountOfMoves] = *board;
+            MovePawn(&newMoves[*outAmountOfMoves], x, y, x, y + 2 * forwardDirection, pawnPiece, promotionPiece);
+            if (!IsColourInCheck(&newMoves[*outAmountOfMoves], teamColour))
             {
                 ++(*outAmountOfMoves);
             }
@@ -392,18 +390,18 @@ void GenerateLegalMovesForPawn(const Board* const board, Board* const newBoard, 
     // Captures
     if (GetColour(GetPiece(board, x + 1, y + forwardDirection)) == oppositeColour)
     {
-        newBoard[*outAmountOfMoves] = *board;
-        MovePawn(&newBoard[*outAmountOfMoves], x, y, x + 1, y + forwardDirection, pawnPiece);
-        if (!IsColourInCheck(&newBoard[*outAmountOfMoves], colour))
+        newMoves[*outAmountOfMoves] = *board;
+        MovePawn(&newMoves[*outAmountOfMoves], x, y, x + 1, y + forwardDirection, pawnPiece, promotionPiece);
+        if (!IsColourInCheck(&newMoves[*outAmountOfMoves], teamColour))
         {
             ++(*outAmountOfMoves);
         }
     }
     if (GetColour(GetPiece(board, x - 1, y + forwardDirection)) == oppositeColour)
     {
-        newBoard[*outAmountOfMoves] = *board;
-        MovePawn(&newBoard[*outAmountOfMoves], x, y, x - 1, y + forwardDirection, pawnPiece);
-        if (!IsColourInCheck(&newBoard[*outAmountOfMoves], colour))
+        newMoves[*outAmountOfMoves] = *board;
+        MovePawn(&newMoves[*outAmountOfMoves], x, y, x - 1, y + forwardDirection, pawnPiece, promotionPiece);
+        if (!IsColourInCheck(&newMoves[*outAmountOfMoves], teamColour))
         {
             ++(*outAmountOfMoves);
         }
@@ -414,10 +412,10 @@ void GenerateLegalMovesForPawn(const Board* const board, Board* const newBoard, 
     {
         if (enPassantY == y && abs(enPassantX - x) == 1)
         {
-            newBoard[*outAmountOfMoves] = *board;
-            MovePawn(&newBoard[*outAmountOfMoves], x, y, enPassantX, y + forwardDirection, pawnPiece);
-            newBoard[*outAmountOfMoves].board[board->enPassantIndex] = EmptySquare; // This is not handled by MovePawn
-            if (!IsColourInCheck(&newBoard[*outAmountOfMoves], colour))
+            newMoves[*outAmountOfMoves] = *board;
+            MovePawn(&newMoves[*outAmountOfMoves], x, y, enPassantX, y + forwardDirection, pawnPiece, promotionPiece);
+            newMoves[*outAmountOfMoves].board[board->enPassantIndex] = EmptySquare; // This is not handled by MovePawn
+            if (!IsColourInCheck(&newMoves[*outAmountOfMoves], teamColour))
             {
                 ++(*outAmountOfMoves);
             }
@@ -425,61 +423,75 @@ void GenerateLegalMovesForPawn(const Board* const board, Board* const newBoard, 
     }
 }
 
-void GenerateLegalMovesForKnight(const Board* const board, Board* const newBoard, int* const outAmountOfMoves, const int x, const int y, const Colour colour, const Colour oppositeColour)
+void GenerateLegalMovesForKnight(const Board* const board, Board* const newMoves, int* const outAmountOfMoves, const int x, const int y, const Colour teamColour, const Colour oppositeColour)
 {
-    AddNormalMoveIfLegal(board, outAmountOfMoves, &newBoard[*outAmountOfMoves], x, y, x + 1, y + 2, colour);
-    AddNormalMoveIfLegal(board, outAmountOfMoves, &newBoard[*outAmountOfMoves], x, y, x - 1, y + 2, colour);
-    AddNormalMoveIfLegal(board, outAmountOfMoves, &newBoard[*outAmountOfMoves], x, y, x + 2, y + 1, colour);
-    AddNormalMoveIfLegal(board, outAmountOfMoves, &newBoard[*outAmountOfMoves], x, y, x - 2, y + 1, colour);
-    AddNormalMoveIfLegal(board, outAmountOfMoves, &newBoard[*outAmountOfMoves], x, y, x + 1, y - 2, colour);
-    AddNormalMoveIfLegal(board, outAmountOfMoves, &newBoard[*outAmountOfMoves], x, y, x - 1, y - 2, colour);
-    AddNormalMoveIfLegal(board, outAmountOfMoves, &newBoard[*outAmountOfMoves], x, y, x + 2, y - 1, colour);
-    AddNormalMoveIfLegal(board, outAmountOfMoves, &newBoard[*outAmountOfMoves], x, y, x - 2, y - 1, colour);
+    AddNormalMoveIfLegal(board, newMoves, outAmountOfMoves, x, y, x + 1, y + 2, teamColour);
+    AddNormalMoveIfLegal(board, newMoves, outAmountOfMoves, x, y, x - 1, y + 2, teamColour);
+    AddNormalMoveIfLegal(board, newMoves, outAmountOfMoves, x, y, x + 2, y + 1, teamColour);
+    AddNormalMoveIfLegal(board, newMoves, outAmountOfMoves, x, y, x - 2, y + 1, teamColour);
+    AddNormalMoveIfLegal(board, newMoves, outAmountOfMoves, x, y, x + 1, y - 2, teamColour);
+    AddNormalMoveIfLegal(board, newMoves, outAmountOfMoves, x, y, x - 1, y - 2, teamColour);
+    AddNormalMoveIfLegal(board, newMoves, outAmountOfMoves, x, y, x + 2, y - 1, teamColour);
+    AddNormalMoveIfLegal(board, newMoves, outAmountOfMoves, x, y, x - 2, y - 1, teamColour);
 }
 
-void GenerateLegalMovesForRook(const Board* const board, Board* const newBoard, int* const outAmountOfMoves, const int x, const int y, const Colour colour, const Colour oppositeColour)
+void GenerateLegalMovesForRook(const Board* const board, Board* const newMoves, int* const outAmountOfMoves, const int x, const int y, const Colour teamColour, const Colour oppositeColour)
 {
-    Piece rookPiece = colour == White ? WhiteRook : BlackRook;
-    AddRookMovesAlongDirectionIfLegal(board, outAmountOfMoves, newBoard, x, y, 1, 0, colour, oppositeColour, rookPiece);
-    AddRookMovesAlongDirectionIfLegal(board, outAmountOfMoves, newBoard, x, y, -1, 0, colour, oppositeColour, rookPiece);
-    AddRookMovesAlongDirectionIfLegal(board, outAmountOfMoves, newBoard, x, y, 0, 1, colour, oppositeColour, rookPiece);
-    AddRookMovesAlongDirectionIfLegal(board, outAmountOfMoves, newBoard, x, y, 0, -1, colour, oppositeColour, rookPiece);
+    Piece rookPiece = teamColour == White ? WhiteRook : BlackRook;
+    AddRookMovesAlongDirectionIfLegal(board, newMoves, outAmountOfMoves, x, y, 1, 0, teamColour, oppositeColour, rookPiece);
+    AddRookMovesAlongDirectionIfLegal(board, newMoves, outAmountOfMoves, x, y, -1, 0, teamColour, oppositeColour, rookPiece);
+    AddRookMovesAlongDirectionIfLegal(board, newMoves, outAmountOfMoves, x, y, 0, 1, teamColour, oppositeColour, rookPiece);
+    AddRookMovesAlongDirectionIfLegal(board, newMoves, outAmountOfMoves, x, y, 0, -1, teamColour, oppositeColour, rookPiece);
 }
 
-void GenerateLegalMovesForBishop(const Board* const board, Board* const newBoard, int* const outAmountOfMoves, const int x, const int y, const Colour colour, const Colour oppositeColour)
+void GenerateLegalMovesForBishop(const Board* const board, Board* const newMoves, int* const outAmountOfMoves, const int x, const int y, const Colour teamColour, const Colour oppositeColour)
 {
-    AddMovesAlongDirectionIfLegal(board, outAmountOfMoves, newBoard, x, y, 1, 1, colour, oppositeColour);
-    AddMovesAlongDirectionIfLegal(board, outAmountOfMoves, newBoard, x, y, -1, -1, colour, oppositeColour);
-    AddMovesAlongDirectionIfLegal(board, outAmountOfMoves, newBoard, x, y, -1, 1, colour, oppositeColour);
-    AddMovesAlongDirectionIfLegal(board, outAmountOfMoves, newBoard, x, y, 1, -1, colour, oppositeColour);
+    AddMovesAlongDirectionIfLegal(board, newMoves, outAmountOfMoves, x, y, 1, 1, teamColour, oppositeColour);
+    AddMovesAlongDirectionIfLegal(board, newMoves, outAmountOfMoves, x, y, -1, -1, teamColour, oppositeColour);
+    AddMovesAlongDirectionIfLegal(board, newMoves, outAmountOfMoves, x, y, -1, 1, teamColour, oppositeColour);
+    AddMovesAlongDirectionIfLegal(board, newMoves, outAmountOfMoves, x, y, 1, -1, teamColour, oppositeColour);
 }
 
-void GenerateLegalMovesForQueen(const Board* const board, Board* const newBoard, int* const outAmountOfMoves, const int x, const int y, const Colour colour, const Colour oppositeColour)
+void GenerateLegalMovesForQueen(const Board* const board, Board* const newMoves, int* const outAmountOfMoves, const int x, const int y, const Colour teamColour, const Colour oppositeColour)
 {
-    AddMovesAlongDirectionIfLegal(board, outAmountOfMoves, newBoard, x, y, 1, 0, colour, oppositeColour);
-    AddMovesAlongDirectionIfLegal(board, outAmountOfMoves, newBoard, x, y, -1, 0, colour, oppositeColour);
-    AddMovesAlongDirectionIfLegal(board, outAmountOfMoves, newBoard, x, y, 0, 1, colour, oppositeColour);
-    AddMovesAlongDirectionIfLegal(board, outAmountOfMoves, newBoard, x, y, 0, -1, colour, oppositeColour);
+    AddMovesAlongDirectionIfLegal(board, newMoves, outAmountOfMoves, x, y, 1, 0, teamColour, oppositeColour);
+    AddMovesAlongDirectionIfLegal(board, newMoves, outAmountOfMoves, x, y, -1, 0, teamColour, oppositeColour);
+    AddMovesAlongDirectionIfLegal(board, newMoves, outAmountOfMoves, x, y, 0, 1, teamColour, oppositeColour);
+    AddMovesAlongDirectionIfLegal(board, newMoves, outAmountOfMoves, x, y, 0, -1, teamColour, oppositeColour);
 
-    AddMovesAlongDirectionIfLegal(board, outAmountOfMoves, newBoard, x, y, 1, 1, colour, oppositeColour);
-    AddMovesAlongDirectionIfLegal(board, outAmountOfMoves, newBoard, x, y, -1, -1, colour, oppositeColour);
-    AddMovesAlongDirectionIfLegal(board, outAmountOfMoves, newBoard, x, y, -1, 1, colour, oppositeColour);
-    AddMovesAlongDirectionIfLegal(board, outAmountOfMoves, newBoard, x, y, 1, -1, colour, oppositeColour);
+    AddMovesAlongDirectionIfLegal(board, newMoves, outAmountOfMoves, x, y, 1, 1, teamColour, oppositeColour);
+    AddMovesAlongDirectionIfLegal(board, newMoves, outAmountOfMoves, x, y, -1, -1, teamColour, oppositeColour);
+    AddMovesAlongDirectionIfLegal(board, newMoves, outAmountOfMoves, x, y, -1, 1, teamColour, oppositeColour);
+    AddMovesAlongDirectionIfLegal(board, newMoves, outAmountOfMoves, x, y, 1, -1, teamColour, oppositeColour);
 }
 
 #define MAX_LEGAL_MOVES 200
 Board* GenerateAllLegalMoves(Board* const board, int* const outAmountOfMoves)
 {
     *outAmountOfMoves = 0;
-    Colour colourOfTurn = board->isWhiteTurn ? White : Black;
-    Colour oppositeColour = colourOfTurn == White ? Black : White;
+    Colour teamColour = board->isWhiteTurn ? White : Black;
+    Colour oppositeColour = teamColour == White ? Black : White;
 
     // Reset En Passant
     if (board->enPassantIndex != -1)
     {
         int enPassantX, enPassantY;
         IndexToPosition(board->enPassantIndex, &enPassantX, &enPassantY);
-        if (GetColour(GetPiece(board, enPassantX, enPassantY)) == colourOfTurn)
+        Piece enPassantPiece = GetPiece(board, enPassantX, enPassantY);
+        Colour enPassantColour = GetColour(enPassantPiece);
+
+        if (enPassantColour == oppositeColour)
+        {
+            if (enPassantColour == White && enPassantY != 3)
+            {
+                board->enPassantIndex = -1;
+            }
+            else if (enPassantColour == Black && enPassantY != 4)
+            {
+                board->enPassantIndex = -1;
+            }
+        }
+        else
         {
             board->enPassantIndex = -1;
         }
@@ -490,9 +502,9 @@ Board* GenerateAllLegalMoves(Board* const board, int* const outAmountOfMoves)
     for (int i = 0; i < 64; ++i)
     {
         Piece piece = board->board[i];
-        Colour colour = GetColour(piece);
+        Colour pieceColour = GetColour(piece);
         
-        if (colour == colourOfTurn)
+        if (pieceColour == teamColour)
         {
             int x, y;
             IndexToPosition(i, &x, &y);
@@ -503,31 +515,31 @@ Board* GenerateAllLegalMoves(Board* const board, int* const outAmountOfMoves)
             case WhiteUnmovedPawn:
             case BlackPawn:
             case BlackUnmovedPawn:
-                GenerateLegalMovesForPawn(board, newMoves, outAmountOfMoves, x, y, colourOfTurn, oppositeColour);
+                GenerateLegalMovesForPawn(board, newMoves, outAmountOfMoves, x, y, teamColour, oppositeColour);
                 break;
             case WhiteRook:
             case WhiteUnmovedRook:
             case BlackRook:
             case BlackUnmovedRook:
-                GenerateLegalMovesForRook(board, newMoves, outAmountOfMoves, x, y, colourOfTurn, oppositeColour);
+                GenerateLegalMovesForRook(board, newMoves, outAmountOfMoves, x, y, teamColour, oppositeColour);
                 break;
             case WhiteKnight:
             case BlackKnight:
-                GenerateLegalMovesForKnight(board, newMoves, outAmountOfMoves, x, y, colourOfTurn, oppositeColour);
+                GenerateLegalMovesForKnight(board, newMoves, outAmountOfMoves, x, y, teamColour, oppositeColour);
                 break;
             case WhiteBishop:
             case BlackBishop:
-                GenerateLegalMovesForBishop(board, newMoves, outAmountOfMoves, x, y, colourOfTurn, oppositeColour);
+                GenerateLegalMovesForBishop(board, newMoves, outAmountOfMoves, x, y, teamColour, oppositeColour);
                 break;
             case WhiteQueen:
             case BlackQueen:
-                GenerateLegalMovesForQueen(board, newMoves, outAmountOfMoves, x, y, colourOfTurn, oppositeColour);
+                GenerateLegalMovesForQueen(board, newMoves, outAmountOfMoves, x, y, teamColour, oppositeColour);
                 break;
             case WhiteKing:
             case WhiteUnmovedKing:
             case BlackKing:
             case BlackUnmovedKing:
-                GenerateLegalMovesForKing(board, newMoves, outAmountOfMoves, x, y, colourOfTurn, oppositeColour);
+                GenerateLegalMovesForKing(board, newMoves, outAmountOfMoves, x, y, teamColour, oppositeColour);
                 break;
             default:
                 assert(false && "In GenerateAllLegalMoves: All pieces aren't covered in the switch statement");

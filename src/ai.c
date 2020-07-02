@@ -61,10 +61,9 @@ int GetMaterialValue(const Board* const board)
 
 void Test()
 {
-    /*Board newTest = InitializeEmptyBoard();
+    /*Board newTest = InitializeTestBoard();
     int count;
     Board* a = GenerateAllLegalMoves(&newTest, &count);
-    printf("%i\n", count);
     int leaves = 0;
     for (int i = 0; i < count; ++i)
     {
@@ -74,7 +73,17 @@ void Test()
         {
             int count3;
             Board* c = GenerateAllLegalMoves(&b[j], &count3);
-            leaves += count3;
+            for (int k = 0; k < count3; ++k)
+            {
+                int count4;
+                Board* d = GenerateAllLegalMoves(&c[k], &count4);
+                for (int l = 0; l < count4; ++l)
+                {
+                    int count5;
+                    Board* e = GenerateAllLegalMoves(&d[l], &count5);
+                    leaves += count5;
+                }
+            }
         }
     }
     printf("%i\n", leaves);*/
@@ -87,8 +96,8 @@ void Test()
     Board startBoard = InitializeBoard();
     int amount1;
     Board* allMoves1 = GenerateAllLegalMoves(&startBoard, &amount1);
-    int nodes = amount1;
-    int leaves = 0;
+    long long nodes = amount1;
+    long long leaves = 0;
     for (int i = 0; i < amount1; ++i)
     {
         int amount2;
@@ -114,7 +123,14 @@ void Test()
                         int amount6;
                         Board* allMoves6 = GenerateAllLegalMoves(&allMoves5[m], &amount6);
                         nodes += amount6;
-                        leaves += amount6;
+                        for (int n = 0; n < amount6; ++n)
+                        {
+                            int amount7;
+                            Board* allMoves7 = GenerateAllLegalMoves(&allMoves6[n], &amount7);
+                            nodes += amount7;
+                            leaves += amount7;
+                            free(allMoves7);
+                        }
                         free(allMoves6);
                     }
                     free(allMoves5);
@@ -129,6 +145,6 @@ void Test()
 
     end = clock();
     cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
-    printf("Nodes: %i - Leaves: %i - Time: %f\n", nodes, leaves, cpu_time_used);
+    printf("Nodes: %lli - Leaves: %lli - Time: %f\n", nodes, leaves, cpu_time_used);
     fflush(stdout);*/
 }

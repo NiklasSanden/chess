@@ -61,7 +61,7 @@ float GetBoardValue(const Board* const board)
     return value;
 }
 
-Board Minimax(Board* const board, const int maxDepth, const int depth, const bool isMaximizing)
+Board Minimax(const Board* const board, const int maxDepth, const int depth, const bool isMaximizing)
 {
     Board returnBoard;
     // Static evaluation for leaves
@@ -118,7 +118,7 @@ Board Minimax(Board* const board, const int maxDepth, const int depth, const boo
 
 void Test()
 {
-    Board board = InitializeBoard();
+    /*Board board = InitializeBoard();
     PrintBoard(&board);
     while (board.value != -FLT_MAX && board.value != FLT_MAX)
     {
@@ -135,7 +135,7 @@ void Test()
     {
         if (board.isWhiteTurn) printf("Black won!\n");
         else                   printf("White won!\n");
-    }
+    }*/
 
     // Test board
     /*Board newTest = InitializeTestBoard();
@@ -166,7 +166,7 @@ void Test()
     printf("%i\n", leaves);*/
 
     // First 6 moves
-    /*clock_t start, end;
+    clock_t start, end;
     double cpu_time_used;
 
     start = clock();
@@ -201,14 +201,7 @@ void Test()
                         int amount6;
                         Board* allMoves6 = GenerateAllLegalMoves(&allMoves5[m], &amount6);
                         nodes += amount6;
-                        for (int n = 0; n < amount6; ++n)
-                        {
-                            int amount7;
-                            Board* allMoves7 = GenerateAllLegalMoves(&allMoves6[n], &amount7);
-                            nodes += amount7;
-                            leaves += amount7;
-                            free(allMoves7);
-                        }
+                        leaves += amount6;
                         free(allMoves6);
                     }
                     free(allMoves5);
@@ -224,5 +217,5 @@ void Test()
     end = clock();
     cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
     printf("Nodes: %lli - Leaves: %lli - Time: %f\n", nodes, leaves, cpu_time_used);
-    fflush(stdout);*/
+    fflush(stdout);
 }

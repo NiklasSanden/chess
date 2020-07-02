@@ -4,6 +4,6 @@
 #include "data.h"
 
 GameEndStatus GetResultOfGameIfNoMovesAreAvailable(const Board* const board);
-Board* GenerateAllLegalMoves(Board* const board, int* const outAmountOfMoves);
+Board* GenerateAllLegalMoves(const Board* const board, int* const outAmountOfMoves);
 
 #endif

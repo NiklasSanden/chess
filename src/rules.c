@@ -127,7 +127,7 @@ GameEndStatus GetResultOfGameIfNoMovesAreAvailable(const Board* const board)
     }
 }
   
-    // Does not change unmoved enum. Changes whose turn it is
+    // Does not change unmoved enum. Changes whose turn it is. Resets En Passant
 void MovePiece(Board* const board, const int xStart, const int yStart, const int xEnd, const int yEnd)
 {
     Piece piece = GetPiece(board, xStart, yStart);
@@ -135,6 +135,8 @@ void MovePiece(Board* const board, const int xStart, const int yStart, const int
 
     SetPiece(board, xEnd, yEnd, piece);
     SetPiece(board, xStart, yStart, EmptySquare);
+
+    board->enPassantIndex = -1;
 }
 void MoveKing(Board* const board, const int xStart, const int yStart, const int xEnd, const int yEnd, const Colour teamColour)
 {
@@ -154,11 +156,6 @@ void MoveKing(Board* const board, const int xStart, const int yStart, const int 
     // Deals with En Passant. This will promote if you land on that rank. Unmoved gets removed by the parameters
 void MovePawn(Board* const board, const int xStart, const int yStart, const int xEnd, const int yEnd, const Piece normalMovedPawn, const Piece promotionPiece)
 {
-    // Double first enables En Passant
-    if (abs(yStart - yEnd) == 2)
-    {
-        board->enPassantIndex = PositionToIndex(xEnd, yEnd);
-    }
     MovePiece(board, xStart, yStart, xEnd, yEnd);
     // promotion
     if (yEnd == 7 || yEnd == 0)
@@ -168,6 +165,11 @@ void MovePawn(Board* const board, const int xStart, const int yStart, const int 
     else
     {
         SetPiece(board, xEnd, yEnd, normalMovedPawn);
+    }
+    // Double first enables En Passant. Must be after MovePiece since it resets it.
+    if (abs(yStart - yEnd) == 2)
+    {
+        board->enPassantIndex = PositionToIndex(xEnd, yEnd);
     }
 }
     // normalMovedRook should have the correct colour and handles removing unmoved automatically
@@ -466,37 +468,11 @@ void GenerateLegalMovesForQueen(const Board* const board, Board* const newMoves,
 }
 
 #define MAX_LEGAL_MOVES 200
-Board* GenerateAllLegalMoves(Board* const board, int* const outAmountOfMoves)
+Board* GenerateAllLegalMoves(const Board* const board, int* const outAmountOfMoves)
 {
     *outAmountOfMoves = 0;
     Colour teamColour = board->isWhiteTurn ? White : Black;
     Colour oppositeColour = teamColour == White ? Black : White;
-
-    // Reset En Passant
-    if (board->enPassantIndex != -1)
-    {
-        int enPassantX, enPassantY;
-        IndexToPosition(board->enPassantIndex, &enPassantX, &enPassantY);
-        Piece enPassantPiece = GetPiece(board, enPassantX, enPassantY);
-        Colour enPassantColour = GetColour(enPassantPiece);
-
-        if (enPassantColour == oppositeColour)
-        {
-            if (enPassantColour == White && enPassantY != 3)
-            {
-                board->enPassantIndex = -1;
-            }
-            else if (enPassantColour == Black && enPassantY != 4)
-            {
-                board->enPassantIndex = -1;
-            }
-        }
-        else
-        {
-            board->enPassantIndex = -1;
-        }
-    }
-    
 
     Board newMoves[MAX_LEGAL_MOVES];
     for (int i = 0; i < 64; ++i)

@@ -10,7 +10,7 @@ src/ai.c \
 src/utility.c
 
 debug:
-	gcc $(CFLAGS) -D DEBUG_LOGGING -o bin/debug/Chess.sh $(SOURCE)
+	gcc $(CFLAGS) -g -o bin/debug/Chess.sh $(SOURCE)
 
 release:
 	gcc $(CFLAGS) -O3 -o bin/release/Chess.sh $(SOURCE)

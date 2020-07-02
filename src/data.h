@@ -47,6 +47,7 @@ typedef struct
     bool isWhiteTurn;   // Init true
 } Board;
 Board InitializeBoard();
+Board InitializeEmptyBoard();
 
 int PositionToIndex(const int x, const int y);
 void IndexToPosition(const int index, int* const outX, int* const outY);

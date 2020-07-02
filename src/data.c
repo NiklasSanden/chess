@@ -41,6 +41,35 @@ Board InitializeBoard()
     return board;
 }
 
+Board InitializeEmptyBoard()
+{
+    Board board;
+    board.enPassantIndex = -1;
+    board.whiteKingIndex = 32;
+    board.blackKingIndex = 31;
+    board.isWhiteTurn = true;
+    board.value = 0.0f;
+    
+    for (int i = 0; i < 64; ++i)
+    {
+        board.board[i] = EmptySquare;
+    }
+
+    // Extra
+    board.board[12] = WhiteUnmovedPawn;
+    board.board[14] = WhiteUnmovedPawn;
+    board.board[25] = WhiteRook;
+    board.board[29] = BlackPawn;
+    board.board[31] = BlackKing;
+    board.board[32] = WhiteKing;
+    board.board[33] = WhitePawn;
+    board.board[39] = BlackRook;
+    board.board[43] = BlackPawn;
+    board.board[50] = BlackUnmovedPawn;
+
+    return board;
+}
+
 int PositionToIndex(const int x, const int y)
 {
     return y * 8 + x;

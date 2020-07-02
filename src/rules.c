@@ -6,19 +6,19 @@
 
 // Helper
 
-bool CheckForAttackingPieceInLine(const Board* const board, const int x, const int y, const int xIncrement, const int yIncrement, const Piece targetPiece, const Piece queenPiece)
+bool CheckForAttackingPieceInLine(const Board* const board, const int x, const int y, const int xIncrement, const int yIncrement, const Piece targetPiece, const Piece targetPieceVariant, const Piece queenPiece)
 {
     Piece piece;
     int i = 1;
     do
     {
         piece = GetPiece(board, x + xIncrement * i, y + yIncrement * i);
-        if (piece == targetPiece || piece == queenPiece)
+        if (piece == targetPiece || piece == targetPieceVariant || piece == queenPiece)
         {
             return true;
         }
 
-        i++;
+        ++i;
     } while (piece != OutsideSquare && GetColour(piece) == NoColour);
 
     return false;
@@ -32,19 +32,40 @@ bool IsPositionAttackedByColour(const Board* const board, const int x, const int
         whiteToBlack = BlackPawn - WhitePawn;
     }
 
+    Piece piece;
     // Pawn
-    if (GetPiece(board, x - 1, y - 1) == whiteToBlack + WhitePawn) return true;
-    if (GetPiece(board, x + 1, y - 1) == whiteToBlack + WhitePawn) return true;
+    if (attackingColour == White)
+    {
+        piece = GetPiece(board, x - 1, y - 1);
+        if (piece == WhitePawn || piece == WhiteUnmovedPawn) return true;
+        piece = GetPiece(board, x + 1, y - 1);
+        if (piece == WhitePawn || piece == WhiteUnmovedPawn) return true;
+    }
+    else
+    {
+        piece = GetPiece(board, x - 1, y + 1);
+        if (piece == BlackPawn || piece == BlackUnmovedPawn) return true;
+        piece = GetPiece(board, x + 1, y + 1);
+        if (piece == BlackPawn || piece == BlackUnmovedPawn) return true;
+    }
 
     // King
-    if (GetPiece(board, x + 1, y) == whiteToBlack + WhiteKing) return true;
-    if (GetPiece(board, x - 1, y) == whiteToBlack + WhiteKing) return true;
-    if (GetPiece(board, x, y + 1) == whiteToBlack + WhiteKing) return true;
-    if (GetPiece(board, x, y - 1) == whiteToBlack + WhiteKing) return true;
-    if (GetPiece(board, x + 1, y + 1) == whiteToBlack + WhiteKing) return true;
-    if (GetPiece(board, x + 1, y - 1) == whiteToBlack + WhiteKing) return true;
-    if (GetPiece(board, x - 1, y + 1) == whiteToBlack + WhiteKing) return true;
-    if (GetPiece(board, x - 1, y - 1) == whiteToBlack + WhiteKing) return true;
+    piece = GetPiece(board, x + 1, y);
+    if (piece == whiteToBlack + WhiteKing || piece == whiteToBlack + WhiteUnmovedKing) return true;
+    piece = GetPiece(board, x - 1, y);
+    if (piece == whiteToBlack + WhiteKing || piece == whiteToBlack + WhiteUnmovedKing) return true;
+    piece = GetPiece(board, x, y + 1);
+    if (piece == whiteToBlack + WhiteKing || piece == whiteToBlack + WhiteUnmovedKing) return true;
+    piece = GetPiece(board, x, y - 1);
+    if (piece == whiteToBlack + WhiteKing || piece == whiteToBlack + WhiteUnmovedKing) return true;
+    piece = GetPiece(board, x + 1, y + 1);
+    if (piece == whiteToBlack + WhiteKing || piece == whiteToBlack + WhiteUnmovedKing) return true;
+    piece = GetPiece(board, x + 1, y - 1);
+    if (piece == whiteToBlack + WhiteKing || piece == whiteToBlack + WhiteUnmovedKing) return true;
+    piece = GetPiece(board, x - 1, y + 1);
+    if (piece == whiteToBlack + WhiteKing || piece == whiteToBlack + WhiteUnmovedKing) return true;
+    piece = GetPiece(board, x - 1, y - 1);
+    if (piece == whiteToBlack + WhiteKing || piece == whiteToBlack + WhiteUnmovedKing) return true;
 
     // Knight
     if (GetPiece(board, x + 1, y + 2) == whiteToBlack + WhiteKnight) return true;
@@ -57,16 +78,16 @@ bool IsPositionAttackedByColour(const Board* const board, const int x, const int
     if (GetPiece(board, x - 2, y - 1) == whiteToBlack + WhiteKnight) return true;
 
     // Rook and first part of Queen
-    if (CheckForAttackingPieceInLine(board, x, y, 1, 0, whiteToBlack + WhiteRook, whiteToBlack + WhiteQueen)) return true;
-    if (CheckForAttackingPieceInLine(board, x, y, -1, 0, whiteToBlack + WhiteRook, whiteToBlack + WhiteQueen)) return true;
-    if (CheckForAttackingPieceInLine(board, x, y, 0, 1, whiteToBlack + WhiteRook, whiteToBlack + WhiteQueen)) return true;
-    if (CheckForAttackingPieceInLine(board, x, y, 0, -1, whiteToBlack + WhiteRook, whiteToBlack + WhiteQueen)) return true;
+    if (CheckForAttackingPieceInLine(board, x, y, 1, 0, whiteToBlack + WhiteRook, whiteToBlack + WhiteUnmovedRook, whiteToBlack + WhiteQueen)) return true;
+    if (CheckForAttackingPieceInLine(board, x, y, -1, 0, whiteToBlack + WhiteRook, whiteToBlack + WhiteUnmovedRook, whiteToBlack + WhiteQueen)) return true;
+    if (CheckForAttackingPieceInLine(board, x, y, 0, 1, whiteToBlack + WhiteRook, whiteToBlack + WhiteUnmovedRook, whiteToBlack + WhiteQueen)) return true;
+    if (CheckForAttackingPieceInLine(board, x, y, 0, -1, whiteToBlack + WhiteRook, whiteToBlack + WhiteUnmovedRook, whiteToBlack + WhiteQueen)) return true;
 
     // Bishop and second part of Queen
-    if (CheckForAttackingPieceInLine(board, x, y, 1, 1, whiteToBlack + WhiteBishop, whiteToBlack + WhiteQueen)) return true;
-    if (CheckForAttackingPieceInLine(board, x, y, -1, 1, whiteToBlack + WhiteBishop, whiteToBlack + WhiteQueen)) return true;
-    if (CheckForAttackingPieceInLine(board, x, y, 1, -1, whiteToBlack + WhiteBishop, whiteToBlack + WhiteQueen)) return true;
-    if (CheckForAttackingPieceInLine(board, x, y, -1, -1, whiteToBlack + WhiteBishop, whiteToBlack + WhiteQueen)) return true;
+    if (CheckForAttackingPieceInLine(board, x, y, 1, 1, whiteToBlack + WhiteBishop, whiteToBlack + WhiteBishop, whiteToBlack + WhiteQueen)) return true;
+    if (CheckForAttackingPieceInLine(board, x, y, -1, 1, whiteToBlack + WhiteBishop, whiteToBlack + WhiteBishop, whiteToBlack + WhiteQueen)) return true;
+    if (CheckForAttackingPieceInLine(board, x, y, 1, -1, whiteToBlack + WhiteBishop, whiteToBlack + WhiteBishop, whiteToBlack + WhiteQueen)) return true;
+    if (CheckForAttackingPieceInLine(board, x, y, -1, -1, whiteToBlack + WhiteBishop, whiteToBlack + WhiteBishop, whiteToBlack + WhiteQueen)) return true;
 
     return false;
 }
@@ -105,34 +126,29 @@ GameEndStatus GetResultOfGameIfNoMovesAreAvailable(const Board* const board)
         return Stalemate;
     }
 }
-
+  
     // Does not change unmoved enum. Changes whose turn it is
 void MovePiece(Board* const board, const int xStart, const int yStart, const int xEnd, const int yEnd)
 {
-    board->isWhiteTurn = !board->isWhiteTurn;
+    Piece piece = GetPiece(board, xStart, yStart);
+    board->isWhiteTurn = GetColour(piece) == Black;
 
-    SetPiece(board, xEnd, yEnd, GetPiece(board, xStart, yStart));
+    SetPiece(board, xEnd, yEnd, piece);
     SetPiece(board, xStart, yStart, EmptySquare);
 }
-void MoveKing(Board* const board, const int xStart, const int yStart, const int xEnd, const int yEnd)
+void MoveKing(Board* const board, const int xStart, const int yStart, const int xEnd, const int yEnd, const Colour colour)
 {
-    if (board->isWhiteTurn)
+    if (colour == White)
     {
         MovePiece(board, xStart, yStart, xEnd, yEnd);
+        SetPiece(board, xEnd, yEnd, WhiteKing);
         board->whiteKingIndex = PositionToIndex(xEnd, yEnd);
-        if (GetPiece(board, xEnd, yEnd) == WhiteUnmovedKing)
-        {
-            SetPiece(board, xEnd, yEnd, WhiteKing);
-        }
     }
     else
     {
         MovePiece(board, xStart, yStart, xEnd, yEnd);
+        SetPiece(board, xEnd, yEnd, BlackKing);
         board->blackKingIndex = PositionToIndex(xEnd, yEnd);
-        if (GetPiece(board, xEnd, yEnd) == BlackUnmovedKing)
-        {
-            SetPiece(board, xEnd, yEnd, BlackUnmovedKing);
-        }
     }
 }
     // Deals with En Passant. promotionOrNormalMovedPawn will be the piece you want to promote to if you are promoting, or alternatively just White/BlackPawn. Therefore unmoved is removed automatically
@@ -143,8 +159,8 @@ void MovePawn(Board* const board, const int xStart, const int yStart, const int 
     {
         board->enPassantIndex = PositionToIndex(xEnd, yEnd);
     }
-    SetPiece(board, xStart, yStart, promotionOrNormalMovedPawn); // no need to handle colours separately because of this
     MovePiece(board, xStart, yStart, xEnd, yEnd);
+    SetPiece(board, xEnd, yEnd, promotionOrNormalMovedPawn); // no need to handle colours separately because of this
 }
     // normalMovedRook should have the correct colour and handles removing unmoved automatically
 void MoveRook(Board* const board, const int xStart, const int yStart, const int xEnd, const int yEnd, const Piece normalMovedRook)
@@ -156,26 +172,26 @@ void MoveRook(Board* const board, const int xStart, const int yStart, const int 
 
 // Generate Moves Helper
 
-void AddNormalMoveIfLegal(const Board* const board, int* const outAmountOfMoves, Board* const newBoard, const int xOld, const int yOld, const int x, const int y, const Colour colour, const Colour oppositeColour)
+void AddNormalMoveIfLegal(const Board* const board, int* const outAmountOfMoves, Board* const newBoard, const int xOld, const int yOld, const int x, const int y, const Colour colour)
 {
     if (!IsSquareBlockedOrOutside(board, x , y, colour))
     {
         *newBoard = *board;
         MovePiece(newBoard, xOld, yOld, x, y);
-        if (!IsColourInCheck(newBoard, oppositeColour))
+        if (!IsColourInCheck(newBoard, colour))
         {
             ++(*outAmountOfMoves);
         }
     }
 }
 
-void AddKingMoveIfLegal(const Board* const board, int* const outAmountOfMoves, Board* const newBoard, const int xOld, const int yOld, const int x, const int y, const Colour colour, const Colour oppositeColour)
+void AddKingMoveIfLegal(const Board* const board, int* const outAmountOfMoves, Board* const newBoard, const int xOld, const int yOld, const int x, const int y, const Colour colour)
 {
     if (!IsSquareBlockedOrOutside(board, x , y, colour))
     {
         *newBoard = *board;
-        MoveKing(newBoard, xOld, yOld, x, y);
-        if (!IsColourInCheck(newBoard, oppositeColour))
+        MoveKing(newBoard, xOld, yOld, x, y, colour);
+        if (!IsColourInCheck(newBoard, colour))
         {
             ++(*outAmountOfMoves);
         }
@@ -185,11 +201,13 @@ void AddKingMoveIfLegal(const Board* const board, int* const outAmountOfMoves, B
 void AddMovesAlongDirectionIfLegal(const Board* const board, int* const outAmountOfMoves, Board* const moves, const int x, const int y, const int xIncrement, const int yIncrement, const Colour colour, const Colour oppositeColour)
 {
     Piece piece;
+    Colour pieceColour;
     int i = 1;
     do
     {
         piece = GetPiece(board, x + xIncrement * i, y + yIncrement * i);
-        if (piece == EmptySquare || GetColour(piece) == oppositeColour)
+        pieceColour = GetColour(piece);
+        if (piece == EmptySquare || pieceColour == oppositeColour)
         {
             moves[*outAmountOfMoves] = *board;
             MovePiece(&moves[*outAmountOfMoves], x, y, x + xIncrement * i, y + yIncrement * i);
@@ -203,18 +221,20 @@ void AddMovesAlongDirectionIfLegal(const Board* const board, int* const outAmoun
             break;
         }
 
-        i++;
-    } while (piece != oppositeColour);
+        ++i;
+    } while (pieceColour != oppositeColour);
 }
 
 void AddRookMovesAlongDirectionIfLegal(const Board* const board, int* const outAmountOfMoves, Board* const moves, const int x, const int y, const int xIncrement, const int yIncrement, const Colour colour, const Colour oppositeColour, const Piece normalMovedRook)
 {
     Piece piece;
+    Colour pieceColour;
     int i = 1;
     do
     {
         piece = GetPiece(board, x + xIncrement * i, y + yIncrement * i);
-        if (piece == EmptySquare || GetColour(piece) == oppositeColour)
+        pieceColour = GetColour(piece);
+        if (piece == EmptySquare || pieceColour == oppositeColour)
         {
             moves[*outAmountOfMoves] = *board;
             MoveRook(&moves[*outAmountOfMoves], x, y, x + xIncrement * i, y + yIncrement * i, normalMovedRook);
@@ -228,30 +248,24 @@ void AddRookMovesAlongDirectionIfLegal(const Board* const board, int* const outA
             break;
         }
 
-        i++;
-    } while (piece != oppositeColour);
+        ++i;
+    } while (pieceColour != oppositeColour);
 }
 
 
 // Generate Moves
 
-Board* GenerateLegalMovesForKing(const Board* const board, int* const outAmountOfMoves, const int x, const int y)
+void GenerateLegalMovesForKing(const Board* const board, Board* const newBoard, int* const outAmountOfMoves, const int x, const int y, const Colour colour, const Colour oppositeColour)
 {
-    *outAmountOfMoves = 0;
-    Board* moves = malloc(sizeof(*moves) * 10);
-    assert(moves && "In GenerateLegalMovesForKing: Failed to allocate memory for moves");
-
-    Colour colour = board->isWhiteTurn ? White : Black;
-    Colour oppositeColour = colour == White ? Black : White;
     // Normal moves
-    AddKingMoveIfLegal(board, outAmountOfMoves, &moves[*outAmountOfMoves], x, y, x + 1, y, colour, oppositeColour);
-    AddKingMoveIfLegal(board, outAmountOfMoves, &moves[*outAmountOfMoves], x, y, x - 1, y, colour, oppositeColour);
-    AddKingMoveIfLegal(board, outAmountOfMoves, &moves[*outAmountOfMoves], x, y, x, y + 1, colour, oppositeColour);
-    AddKingMoveIfLegal(board, outAmountOfMoves, &moves[*outAmountOfMoves], x, y, x, y - 1, colour, oppositeColour);
-    AddKingMoveIfLegal(board, outAmountOfMoves, &moves[*outAmountOfMoves], x, y, x + 1, y + 1, colour, oppositeColour);
-    AddKingMoveIfLegal(board, outAmountOfMoves, &moves[*outAmountOfMoves], x, y, x + 1, y - 1, colour, oppositeColour);
-    AddKingMoveIfLegal(board, outAmountOfMoves, &moves[*outAmountOfMoves], x, y, x - 1, y + 1, colour, oppositeColour);
-    AddKingMoveIfLegal(board, outAmountOfMoves, &moves[*outAmountOfMoves], x, y, x - 1, y - 1, colour, oppositeColour);
+    AddKingMoveIfLegal(board, outAmountOfMoves, &newBoard[*outAmountOfMoves], x, y, x + 1, y, colour);
+    AddKingMoveIfLegal(board, outAmountOfMoves, &newBoard[*outAmountOfMoves], x, y, x - 1, y, colour);
+    AddKingMoveIfLegal(board, outAmountOfMoves, &newBoard[*outAmountOfMoves], x, y, x, y + 1, colour);
+    AddKingMoveIfLegal(board, outAmountOfMoves, &newBoard[*outAmountOfMoves], x, y, x, y - 1, colour);
+    AddKingMoveIfLegal(board, outAmountOfMoves, &newBoard[*outAmountOfMoves], x, y, x + 1, y + 1, colour);
+    AddKingMoveIfLegal(board, outAmountOfMoves, &newBoard[*outAmountOfMoves], x, y, x + 1, y - 1, colour);
+    AddKingMoveIfLegal(board, outAmountOfMoves, &newBoard[*outAmountOfMoves], x, y, x - 1, y + 1, colour);
+    AddKingMoveIfLegal(board, outAmountOfMoves, &newBoard[*outAmountOfMoves], x, y, x - 1, y - 1, colour);
 
     if (!IsColourInCheck(board, colour))
     {
@@ -262,11 +276,11 @@ Board* GenerateLegalMovesForKing(const Board* const board, int* const outAmountO
             {
                 if (GetPiece(board, x + 1, y) == EmptySquare && GetPiece(board, x + 2, y) == EmptySquare)
                 {
-                    if (!IsPositionAttackedByColour(board, x, y, Black) && !IsPositionAttackedByColour(board, x + 1, y, Black) && !IsPositionAttackedByColour(board, x + 2, y, Black))
+                    if (!IsPositionAttackedByColour(board, x + 1, y, Black) && !IsPositionAttackedByColour(board, x + 2, y, Black))
                     {
-                        moves[*outAmountOfMoves] = *board;
-                        MoveKing(&moves[*outAmountOfMoves], x, y, x + 2, y);
-                        MoveRook(&moves[*outAmountOfMoves], 7, 0, 5, 0, WhiteRook);
+                        newBoard[*outAmountOfMoves] = *board;
+                        MoveKing(&newBoard[*outAmountOfMoves], x, y, x + 2, y, colour);
+                        MoveRook(&newBoard[*outAmountOfMoves], 7, 0, 5, 0, WhiteRook);
                         ++(*outAmountOfMoves);
                     }
                 }
@@ -278,11 +292,11 @@ Board* GenerateLegalMovesForKing(const Board* const board, int* const outAmountO
             {
                 if (GetPiece(board, x + 1, y) == EmptySquare && GetPiece(board, x + 2, y) == EmptySquare)
                 {
-                    if (!IsPositionAttackedByColour(board, x, y, White) && !IsPositionAttackedByColour(board, x + 1, y, White) && !IsPositionAttackedByColour(board, x + 2, y, White))
+                    if (!IsPositionAttackedByColour(board, x + 1, y, White) && !IsPositionAttackedByColour(board, x + 2, y, White))
                     {
-                        moves[*outAmountOfMoves] = *board;
-                        MoveKing(&moves[*outAmountOfMoves], x, y, x + 2, y);
-                        MoveRook(&moves[*outAmountOfMoves], 7, 7, 5, 7, BlackRook);
+                        newBoard[*outAmountOfMoves] = *board;
+                        MoveKing(&newBoard[*outAmountOfMoves], x, y, x + 2, y, colour);
+                        MoveRook(&newBoard[*outAmountOfMoves], 7, 7, 5, 7, BlackRook);
                         ++(*outAmountOfMoves);
                     }
                 }
@@ -296,11 +310,11 @@ Board* GenerateLegalMovesForKing(const Board* const board, int* const outAmountO
             {
                 if (GetPiece(board, x - 1, y) == EmptySquare && GetPiece(board, x - 2, y) == EmptySquare && GetPiece(board, x - 3, y) == EmptySquare)
                 {
-                    if (!IsPositionAttackedByColour(board, x, y, Black) && !IsPositionAttackedByColour(board, x - 1, y, Black) && !IsPositionAttackedByColour(board, x - 2, y, Black))
+                    if (!IsPositionAttackedByColour(board, x - 1, y, Black) && !IsPositionAttackedByColour(board, x - 2, y, Black))
                     {
-                        moves[*outAmountOfMoves] = *board;
-                        MoveKing(&moves[*outAmountOfMoves], x, y, x - 2, y);
-                        MoveRook(&moves[*outAmountOfMoves], 0, 0, 3, 0, WhiteRook);
+                        newBoard[*outAmountOfMoves] = *board;
+                        MoveKing(&newBoard[*outAmountOfMoves], x, y, x - 2, y, colour);
+                        MoveRook(&newBoard[*outAmountOfMoves], 0, 0, 3, 0, WhiteRook);
                         ++(*outAmountOfMoves);
                     }
                 }
@@ -312,42 +326,27 @@ Board* GenerateLegalMovesForKing(const Board* const board, int* const outAmountO
             {
                 if (GetPiece(board, x - 1, y) == EmptySquare && GetPiece(board, x - 2, y) == EmptySquare && GetPiece(board, x - 3, y) == EmptySquare)
                 {
-                    if (!IsPositionAttackedByColour(board, x, y, White) && !IsPositionAttackedByColour(board, x - 1, y, White) && !IsPositionAttackedByColour(board, x - 2, y, White))
+                    if (!IsPositionAttackedByColour(board, x - 1, y, White) && !IsPositionAttackedByColour(board, x - 2, y, White))
                     {
-                        moves[*outAmountOfMoves] = *board;
-                        MoveKing(&moves[*outAmountOfMoves], x, y, x - 2, y);
-                        MoveRook(&moves[*outAmountOfMoves], 0, 7, 3, 7, BlackRook);
+                        newBoard[*outAmountOfMoves] = *board;
+                        MoveKing(&newBoard[*outAmountOfMoves], x, y, x - 2, y, colour);
+                        MoveRook(&newBoard[*outAmountOfMoves], 0, 7, 3, 7, BlackRook);
                         ++(*outAmountOfMoves);
                     }
                 }
             }
         }
     }
-
-    //moves = realloc(moves, sizeof(*moves) * (*outAmountOfMoves));
-    //assert(moves && "In GenerateLegalMovesForKing: Failed to reallocate memory for moves");
-    return moves;
 }
-
-    // Resets En Passant to -1 if it is over. Currently always promotes to a queen
-Board* GenerateLegalMovesForPawn(Board* const board, int* const outAmountOfMoves, const int x, const int y)
+    
+    // Currently always promotes to a queen
+void GenerateLegalMovesForPawn(const Board* const board, Board* const newBoard, int* const outAmountOfMoves, const int x, const int y, const Colour colour, const Colour oppositeColour)
 {
-    *outAmountOfMoves = 0;
-    Board* moves = malloc(sizeof(*moves) * 5);
-    assert(moves && "In GenerateLegalMovesForPawn: Failed to allocate memory for moves");
-
-    Colour colour = board->isWhiteTurn ? White : Black;
-    Colour oppositeColour = colour == White ? Black : White;
-
-    // En Passant index reset
+    // En Passant position
     int enPassantX, enPassantY;
     if (board->enPassantIndex != -1)
     {
         IndexToPosition(board->enPassantIndex, &enPassantX, &enPassantY);
-        if (GetColour(GetPiece(board, enPassantX, enPassantY)) == colour)
-        {
-            board->enPassantIndex = -1;
-        }
     }
 
     int forwardDirection = colour == White ? 1 : -1;
@@ -357,20 +356,20 @@ Board* GenerateLegalMovesForPawn(Board* const board, int* const outAmountOfMoves
     Piece promotionPiece = colour == White ? WhiteQueen : BlackQueen;
     // Moves
     // Forward 1
-    if (!IsSquareBlockedOrOutside(board, x , y + forwardDirection, colour))
+    if (GetPiece(board, x, y + forwardDirection) == EmptySquare)
     {
-        moves[*outAmountOfMoves] = *board;
+        newBoard[*outAmountOfMoves] = *board;
         // promotion
         if (y == promotionLine)
         {
-            MovePawn(&moves[*outAmountOfMoves], x, y, x, y + forwardDirection, promotionPiece);
+            MovePawn(&newBoard[*outAmountOfMoves], x, y, x, y + forwardDirection, promotionPiece);
         } 
         else
         {
-            MovePawn(&moves[*outAmountOfMoves], x, y, x, y + forwardDirection, pawnPiece);
+            MovePawn(&newBoard[*outAmountOfMoves], x, y, x, y + forwardDirection, pawnPiece);
         }
 
-        if (!IsColourInCheck(&moves[*outAmountOfMoves], colour))
+        if (!IsColourInCheck(&newBoard[*outAmountOfMoves], colour))
         {
             ++(*outAmountOfMoves);
         }
@@ -379,11 +378,11 @@ Board* GenerateLegalMovesForPawn(Board* const board, int* const outAmountOfMoves
     // Forward 2
     if (GetPiece(board, x, y) == unmovedPawnPiece)
     {
-        if (!IsSquareBlockedOrOutside(board, x, y + forwardDirection, colour) && !IsSquareBlockedOrOutside(board, x, y + 2 * forwardDirection, colour))
+        if (GetPiece(board, x, y + forwardDirection) == EmptySquare && GetPiece(board, x, y + 2 * forwardDirection) == EmptySquare)
         {
-            moves[*outAmountOfMoves] = *board;
-            MovePawn(&moves[*outAmountOfMoves], x, y, x, y + 2 * forwardDirection, pawnPiece);
-            if (!IsColourInCheck(&moves[*outAmountOfMoves], colour))
+            newBoard[*outAmountOfMoves] = *board;
+            MovePawn(&newBoard[*outAmountOfMoves], x, y, x, y + 2 * forwardDirection, pawnPiece);
+            if (!IsColourInCheck(&newBoard[*outAmountOfMoves], colour))
             {
                 ++(*outAmountOfMoves);
             }
@@ -393,18 +392,18 @@ Board* GenerateLegalMovesForPawn(Board* const board, int* const outAmountOfMoves
     // Captures
     if (GetColour(GetPiece(board, x + 1, y + forwardDirection)) == oppositeColour)
     {
-        moves[*outAmountOfMoves] = *board;
-        MovePawn(&moves[*outAmountOfMoves], x, y, x + 1, y + forwardDirection, pawnPiece);
-        if (!IsColourInCheck(&moves[*outAmountOfMoves], colour))
+        newBoard[*outAmountOfMoves] = *board;
+        MovePawn(&newBoard[*outAmountOfMoves], x, y, x + 1, y + forwardDirection, pawnPiece);
+        if (!IsColourInCheck(&newBoard[*outAmountOfMoves], colour))
         {
             ++(*outAmountOfMoves);
         }
     }
     if (GetColour(GetPiece(board, x - 1, y + forwardDirection)) == oppositeColour)
     {
-        moves[*outAmountOfMoves] = *board;
-        MovePawn(&moves[*outAmountOfMoves], x, y, x - 1, y + forwardDirection, pawnPiece);
-        if (!IsColourInCheck(&moves[*outAmountOfMoves], colour))
+        newBoard[*outAmountOfMoves] = *board;
+        MovePawn(&newBoard[*outAmountOfMoves], x, y, x - 1, y + forwardDirection, pawnPiece);
+        if (!IsColourInCheck(&newBoard[*outAmountOfMoves], colour))
         {
             ++(*outAmountOfMoves);
         }
@@ -415,120 +414,84 @@ Board* GenerateLegalMovesForPawn(Board* const board, int* const outAmountOfMoves
     {
         if (enPassantY == y && abs(enPassantX - x) == 1)
         {
-            moves[*outAmountOfMoves] = *board;
-            MovePawn(&moves[*outAmountOfMoves], x, y, enPassantX, y + forwardDirection, pawnPiece);
-            moves[*outAmountOfMoves].board[board->enPassantIndex] = EmptySquare; // This is not handled by MovePawn
-            if (!IsColourInCheck(&moves[*outAmountOfMoves], colour))
+            newBoard[*outAmountOfMoves] = *board;
+            MovePawn(&newBoard[*outAmountOfMoves], x, y, enPassantX, y + forwardDirection, pawnPiece);
+            newBoard[*outAmountOfMoves].board[board->enPassantIndex] = EmptySquare; // This is not handled by MovePawn
+            if (!IsColourInCheck(&newBoard[*outAmountOfMoves], colour))
             {
                 ++(*outAmountOfMoves);
             }
         }
     }
-
-    //moves = realloc(moves, sizeof(*moves) * (*outAmountOfMoves));
-    //assert(moves && "In GenerateLegalMovesForPawn: Failed to reallocate memory for moves");
-    return moves;
 }
 
-Board* GenerateLegalMovesForKnight(const Board* const board, int* const outAmountOfMoves, const int x, const int y)
+void GenerateLegalMovesForKnight(const Board* const board, Board* const newBoard, int* const outAmountOfMoves, const int x, const int y, const Colour colour, const Colour oppositeColour)
 {
-    *outAmountOfMoves = 0;
-    Board* moves = malloc(sizeof(*moves) * 8);
-    assert(moves && "In GenerateLegalMovesForKnight: Failed to allocate memory for moves");
-
-    Colour colour = board->isWhiteTurn ? White : Black;
-    Colour oppositeColour = colour == White ? Black : White;
-
-    AddNormalMoveIfLegal(board, outAmountOfMoves, &moves[*outAmountOfMoves], x, y, x + 1, y + 2, colour, oppositeColour);
-    AddNormalMoveIfLegal(board, outAmountOfMoves, &moves[*outAmountOfMoves], x, y, x - 1, y + 2, colour, oppositeColour);
-    AddNormalMoveIfLegal(board, outAmountOfMoves, &moves[*outAmountOfMoves], x, y, x + 2, y + 1, colour, oppositeColour);
-    AddNormalMoveIfLegal(board, outAmountOfMoves, &moves[*outAmountOfMoves], x, y, x - 2, y + 1, colour, oppositeColour);
-    AddNormalMoveIfLegal(board, outAmountOfMoves, &moves[*outAmountOfMoves], x, y, x + 1, y - 2, colour, oppositeColour);
-    AddNormalMoveIfLegal(board, outAmountOfMoves, &moves[*outAmountOfMoves], x, y, x - 1, y - 2, colour, oppositeColour);
-    AddNormalMoveIfLegal(board, outAmountOfMoves, &moves[*outAmountOfMoves], x, y, x + 2, y - 1, colour, oppositeColour);
-    AddNormalMoveIfLegal(board, outAmountOfMoves, &moves[*outAmountOfMoves], x, y, x - 2, y - 1, colour, oppositeColour);
-
-    //moves = realloc(moves, sizeof(*moves) * (*outAmountOfMoves));
-    //assert(moves && "In GenerateLegalMovesForKnight: Failed to reallocate memory for moves");
-    return moves;
+    AddNormalMoveIfLegal(board, outAmountOfMoves, &newBoard[*outAmountOfMoves], x, y, x + 1, y + 2, colour);
+    AddNormalMoveIfLegal(board, outAmountOfMoves, &newBoard[*outAmountOfMoves], x, y, x - 1, y + 2, colour);
+    AddNormalMoveIfLegal(board, outAmountOfMoves, &newBoard[*outAmountOfMoves], x, y, x + 2, y + 1, colour);
+    AddNormalMoveIfLegal(board, outAmountOfMoves, &newBoard[*outAmountOfMoves], x, y, x - 2, y + 1, colour);
+    AddNormalMoveIfLegal(board, outAmountOfMoves, &newBoard[*outAmountOfMoves], x, y, x + 1, y - 2, colour);
+    AddNormalMoveIfLegal(board, outAmountOfMoves, &newBoard[*outAmountOfMoves], x, y, x - 1, y - 2, colour);
+    AddNormalMoveIfLegal(board, outAmountOfMoves, &newBoard[*outAmountOfMoves], x, y, x + 2, y - 1, colour);
+    AddNormalMoveIfLegal(board, outAmountOfMoves, &newBoard[*outAmountOfMoves], x, y, x - 2, y - 1, colour);
 }
 
-Board* GenerateLegalMovesForRook(const Board* const board, int* const outAmountOfMoves, const int x, const int y)
+void GenerateLegalMovesForRook(const Board* const board, Board* const newBoard, int* const outAmountOfMoves, const int x, const int y, const Colour colour, const Colour oppositeColour)
 {
-    *outAmountOfMoves = 0;
-    Board* moves = malloc(sizeof(*moves) * 14);
-    assert(moves && "In GenerateLegalMovesForRook: Failed to allocate memory for moves");
-
-    Colour colour = board->isWhiteTurn ? White : Black;
-    Colour oppositeColour = colour == White ? Black : White;
-
     Piece rookPiece = colour == White ? WhiteRook : BlackRook;
-    AddRookMovesAlongDirectionIfLegal(board, outAmountOfMoves, moves, x, y, 1, 0, colour, oppositeColour, rookPiece);
-    AddRookMovesAlongDirectionIfLegal(board, outAmountOfMoves, moves, x, y, -1, 0, colour, oppositeColour, rookPiece);
-    AddRookMovesAlongDirectionIfLegal(board, outAmountOfMoves, moves, x, y, 0, 1, colour, oppositeColour, rookPiece);
-    AddRookMovesAlongDirectionIfLegal(board, outAmountOfMoves, moves, x, y, 0, -1, colour, oppositeColour, rookPiece);
-
-    //moves = realloc(moves, sizeof(*moves) * (*outAmountOfMoves));
-    //assert(moves && "In GenerateLegalMovesForRook: Failed to reallocate memory for moves");
-    return moves;
+    AddRookMovesAlongDirectionIfLegal(board, outAmountOfMoves, newBoard, x, y, 1, 0, colour, oppositeColour, rookPiece);
+    AddRookMovesAlongDirectionIfLegal(board, outAmountOfMoves, newBoard, x, y, -1, 0, colour, oppositeColour, rookPiece);
+    AddRookMovesAlongDirectionIfLegal(board, outAmountOfMoves, newBoard, x, y, 0, 1, colour, oppositeColour, rookPiece);
+    AddRookMovesAlongDirectionIfLegal(board, outAmountOfMoves, newBoard, x, y, 0, -1, colour, oppositeColour, rookPiece);
 }
 
-Board* GenerateLegalMovesForBishop(const Board* const board, int* const outAmountOfMoves, const int x, const int y)
+void GenerateLegalMovesForBishop(const Board* const board, Board* const newBoard, int* const outAmountOfMoves, const int x, const int y, const Colour colour, const Colour oppositeColour)
 {
-    *outAmountOfMoves = 0;
-    Board* moves = malloc(sizeof(*moves) * 13);
-    assert(moves && "In GenerateLegalMovesForBishop: Failed to allocate memory for moves");
-
-    Colour colour = board->isWhiteTurn ? White : Black;
-    Colour oppositeColour = colour == White ? Black : White;
-
-    AddMovesAlongDirectionIfLegal(board, outAmountOfMoves, moves, x, y, 1, 1, colour, oppositeColour);
-    AddMovesAlongDirectionIfLegal(board, outAmountOfMoves, moves, x, y, -1, -1, colour, oppositeColour);
-    AddMovesAlongDirectionIfLegal(board, outAmountOfMoves, moves, x, y, -1, 1, colour, oppositeColour);
-    AddMovesAlongDirectionIfLegal(board, outAmountOfMoves, moves, x, y, 1, -1, colour, oppositeColour);
-
-    //moves = realloc(moves, sizeof(*moves) * (*outAmountOfMoves));
-    //assert(moves && "In GenerateLegalMovesForBishop: Failed to reallocate memory for moves");
-    return moves;
+    AddMovesAlongDirectionIfLegal(board, outAmountOfMoves, newBoard, x, y, 1, 1, colour, oppositeColour);
+    AddMovesAlongDirectionIfLegal(board, outAmountOfMoves, newBoard, x, y, -1, -1, colour, oppositeColour);
+    AddMovesAlongDirectionIfLegal(board, outAmountOfMoves, newBoard, x, y, -1, 1, colour, oppositeColour);
+    AddMovesAlongDirectionIfLegal(board, outAmountOfMoves, newBoard, x, y, 1, -1, colour, oppositeColour);
 }
 
-Board* GenerateLegalMovesForQueen(const Board* const board, int* const outAmountOfMoves, const int x, const int y)
+void GenerateLegalMovesForQueen(const Board* const board, Board* const newBoard, int* const outAmountOfMoves, const int x, const int y, const Colour colour, const Colour oppositeColour)
 {
-    *outAmountOfMoves = 0;
-    Board* moves = malloc(sizeof(*moves) * 27);
-    assert(moves && "In GenerateLegalMovesForQueen: Failed to allocate memory for moves");
+    AddMovesAlongDirectionIfLegal(board, outAmountOfMoves, newBoard, x, y, 1, 0, colour, oppositeColour);
+    AddMovesAlongDirectionIfLegal(board, outAmountOfMoves, newBoard, x, y, -1, 0, colour, oppositeColour);
+    AddMovesAlongDirectionIfLegal(board, outAmountOfMoves, newBoard, x, y, 0, 1, colour, oppositeColour);
+    AddMovesAlongDirectionIfLegal(board, outAmountOfMoves, newBoard, x, y, 0, -1, colour, oppositeColour);
 
-    Colour colour = board->isWhiteTurn ? White : Black;
-    Colour oppositeColour = colour == White ? Black : White;
-
-    AddMovesAlongDirectionIfLegal(board, outAmountOfMoves, moves, x, y, 1, 0, colour, oppositeColour);
-    AddMovesAlongDirectionIfLegal(board, outAmountOfMoves, moves, x, y, -1, 0, colour, oppositeColour);
-    AddMovesAlongDirectionIfLegal(board, outAmountOfMoves, moves, x, y, 0, 1, colour, oppositeColour);
-    AddMovesAlongDirectionIfLegal(board, outAmountOfMoves, moves, x, y, 0, -1, colour, oppositeColour);
-
-    AddMovesAlongDirectionIfLegal(board, outAmountOfMoves, moves, x, y, 1, 1, colour, oppositeColour);
-    AddMovesAlongDirectionIfLegal(board, outAmountOfMoves, moves, x, y, -1, -1, colour, oppositeColour);
-    AddMovesAlongDirectionIfLegal(board, outAmountOfMoves, moves, x, y, -1, 1, colour, oppositeColour);
-    AddMovesAlongDirectionIfLegal(board, outAmountOfMoves, moves, x, y, 1, -1, colour, oppositeColour);
-
-    //moves = realloc(moves, sizeof(*moves) * (*outAmountOfMoves));
-    //assert(moves && "In GenerateLegalMovesForQueen: Failed to reallocate memory for moves");
-    return moves;
+    AddMovesAlongDirectionIfLegal(board, outAmountOfMoves, newBoard, x, y, 1, 1, colour, oppositeColour);
+    AddMovesAlongDirectionIfLegal(board, outAmountOfMoves, newBoard, x, y, -1, -1, colour, oppositeColour);
+    AddMovesAlongDirectionIfLegal(board, outAmountOfMoves, newBoard, x, y, -1, 1, colour, oppositeColour);
+    AddMovesAlongDirectionIfLegal(board, outAmountOfMoves, newBoard, x, y, 1, -1, colour, oppositeColour);
 }
 
+#define MAX_LEGAL_MOVES 200
 Board* GenerateAllLegalMoves(Board* const board, int* const outAmountOfMoves)
 {
     *outAmountOfMoves = 0;
     Colour colourOfTurn = board->isWhiteTurn ? White : Black;
+    Colour oppositeColour = colourOfTurn == White ? Black : White;
 
-    Board* newMoves[64] = { NULL };
-    int newMovesCount[64] = { 0 };
+    // Reset En Passant
+    if (board->enPassantIndex != -1)
+    {
+        int enPassantX, enPassantY;
+        IndexToPosition(board->enPassantIndex, &enPassantX, &enPassantY);
+        if (GetColour(GetPiece(board, enPassantX, enPassantY)) == colourOfTurn)
+        {
+            board->enPassantIndex = -1;
+        }
+    }
+    
+
+    Board newMoves[MAX_LEGAL_MOVES];
     for (int i = 0; i < 64; ++i)
     {
         Piece piece = board->board[i];
         Colour colour = GetColour(piece);
         
-        newMovesCount[i] = 0;
         if (colour == colourOfTurn)
         {
             int x, y;
@@ -540,52 +503,44 @@ Board* GenerateAllLegalMoves(Board* const board, int* const outAmountOfMoves)
             case WhiteUnmovedPawn:
             case BlackPawn:
             case BlackUnmovedPawn:
-                newMoves[i] = GenerateLegalMovesForPawn(board, &newMovesCount[i], x, y);
+                GenerateLegalMovesForPawn(board, newMoves, outAmountOfMoves, x, y, colourOfTurn, oppositeColour);
                 break;
             case WhiteRook:
             case WhiteUnmovedRook:
             case BlackRook:
             case BlackUnmovedRook:
-                newMoves[i] = GenerateLegalMovesForRook(board, &newMovesCount[i], x, y);
+                GenerateLegalMovesForRook(board, newMoves, outAmountOfMoves, x, y, colourOfTurn, oppositeColour);
                 break;
             case WhiteKnight:
             case BlackKnight:
-                newMoves[i] = GenerateLegalMovesForKnight(board, &newMovesCount[i], x, y);
+                GenerateLegalMovesForKnight(board, newMoves, outAmountOfMoves, x, y, colourOfTurn, oppositeColour);
                 break;
             case WhiteBishop:
             case BlackBishop:
-                newMoves[i] = GenerateLegalMovesForBishop(board, &newMovesCount[i], x, y);
+                GenerateLegalMovesForBishop(board, newMoves, outAmountOfMoves, x, y, colourOfTurn, oppositeColour);
                 break;
             case WhiteQueen:
             case BlackQueen:
-                newMoves[i] = GenerateLegalMovesForQueen(board, &newMovesCount[i], x, y);
+                GenerateLegalMovesForQueen(board, newMoves, outAmountOfMoves, x, y, colourOfTurn, oppositeColour);
                 break;
             case WhiteKing:
             case WhiteUnmovedKing:
             case BlackKing:
             case BlackUnmovedKing:
-                newMoves[i] = GenerateLegalMovesForKing(board, &newMovesCount[i], x, y);
+                GenerateLegalMovesForKing(board, newMoves, outAmountOfMoves, x, y, colourOfTurn, oppositeColour);
                 break;
             default:
                 assert(false && "In GenerateAllLegalMoves: All pieces aren't covered in the switch statement");
                 break;
             }
-
-            *outAmountOfMoves += newMovesCount[i];
         }
     }
 
     Board* moves = malloc(sizeof(*moves) * (*outAmountOfMoves));
     assert(moves && "In GenerateAllLegalMoves: Failed to allocate memory for moves");
-    int index = 0;
-    for (int i = 0; i < 64; ++i)
+    for (int i = 0; i < *outAmountOfMoves; ++i)
     {
-        for (int j = 0; j < newMovesCount[i]; ++j)
-        {
-            moves[index] = newMoves[i][j];
-            ++index;
-        }
-        free(newMoves[i]);
+        moves[i] = newMoves[i];
     }
 
     return moves;

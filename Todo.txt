@@ -1,0 +1,7 @@
+Add incentive for castling through position values
+
+Add nextBoard as a pointer in the Board struct. 
+Add a freeBoard function to recursively free these pointers. 
+Minimax will set the nextBoard of returnBoard to point to a malloc:ed version of the bestBoard. 
+Add a public wrapper function for Minimax that calls freeBoard on board. 
+In Minimax, remember to call FreeBoard on every board returned from Minimax that is NOT the bestBoard that we will malloc.

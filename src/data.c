@@ -7,6 +7,7 @@ Board InitializeBoard()
     board.whiteKingIndex = 4;
     board.blackKingIndex = 60;
     board.isWhiteTurn = true;
+    board.isGameOver = false;
     board.value = 0.0f;
     
     board.board[0] = WhiteUnmovedRook;
@@ -46,6 +47,7 @@ Board InitializeTestBoard()
     Board board;
     board.enPassantIndex = -1;
     board.isWhiteTurn = true;
+    board.isGameOver = false;
     board.value = 0.0f;
     
     // Do not make this into a loop. You are suppose to change emptysquares to test

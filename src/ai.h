@@ -3,6 +3,7 @@
 
 #include "data.h"
 
-void Test();
+void TestGenerateLeavesAtDepthFromTestBoard();
+void TestPlayingItself();
 
 #endif

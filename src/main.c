@@ -2,7 +2,7 @@
 
 int main()
 {
-    Test();
+    TestPlayingItself();
 
     return 0;
 }

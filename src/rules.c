@@ -467,14 +467,12 @@ void GenerateLegalMovesForQueen(const Board* const board, Board* const newMoves,
     AddMovesAlongDirectionIfLegal(board, newMoves, outAmountOfMoves, x, y, 1, -1, teamColour, oppositeColour);
 }
 
-#define MAX_LEGAL_MOVES 200
-Board* GenerateAllLegalMoves(const Board* const board, int* const outAmountOfMoves)
+void GenerateAllLegalMoves(const Board* const board, Board* const newMoves, int* const outAmountOfMoves)
 {
     *outAmountOfMoves = 0;
     Colour teamColour = board->isWhiteTurn ? White : Black;
     Colour oppositeColour = teamColour == White ? Black : White;
 
-    Board newMoves[MAX_LEGAL_MOVES];
     for (int i = 0; i < 64; ++i)
     {
         Piece piece = board->board[i];
@@ -523,17 +521,4 @@ Board* GenerateAllLegalMoves(const Board* const board, int* const outAmountOfMov
             }
         }
     }
-
-    Board* moves = NULL;
-    if (*outAmountOfMoves > 0)
-    {
-        moves = malloc(sizeof(*moves) * (*outAmountOfMoves));
-        assert(moves && "In GenerateAllLegalMoves: Failed to allocate memory for moves");
-        for (int i = 0; i < *outAmountOfMoves; ++i)
-        {
-            moves[i] = newMoves[i];
-        }
-    }
-
-    return moves;
 }

@@ -9,6 +9,9 @@
 #include "rules.h"
 #include "utility.h"
 
+static int nodes = 1;
+static int round = 1;
+
 // Position Dictionaries
 static const float PawnPositionValues[] = {
      0,  0,  0,  0,  0,  0,  0,  0,
@@ -144,73 +147,176 @@ float GetBoardValue(const Board* const board)
     return value;
 }
 
-Board Minimax(const Board* const board, const int maxDepth, const int depth, const bool isMaximizing)
+int CompareAscendingOrder(const void* a, const void* b)
+{
+    float valueA = (*((Board*)a)).value;
+    float valueB = (*((Board*)b)).value;
+
+    return (valueA > valueB) - (valueA < valueB);
+}
+int CompareDescendingOrder(const void* a, const void* b)
+{
+    float valueA = (*((Board*)a)).value;
+    float valueB = (*((Board*)b)).value;
+
+    return (valueB > valueA) - (valueB < valueA);
+}
+
+Board Minimax(const Board* const board, float alpha, float beta, const int depthLeft, const bool isMaximizing)
 {
     Board returnBoard;
-    // Static evaluation for leaves
-    if (depth == maxDepth)
+    // Static evaluation has already been done when sorting
+    if (depthLeft == 0)
     {
         returnBoard = *board;
-        returnBoard.value = GetBoardValue(&returnBoard);
         return returnBoard;
     }
 
-
     int allPossibleMovesCount;
-    Board* allPossibleMoves = GenerateAllLegalMoves(board, &allPossibleMovesCount);
+    Board allPossibleMoves[MAX_LEGAL_MOVES];
+    GenerateAllLegalMoves(board, allPossibleMoves, &allPossibleMovesCount);
+    nodes += allPossibleMovesCount;
 
-    // If the game is over (no need to free allPossibleMoves since it points to NULL if allPossibleMovesCount = 0)
+    // The game is over if you can't make a move (Checkmate or Stalemate)
     if (allPossibleMovesCount == 0)
     {
         returnBoard = *board;
+        returnBoard.isGameOver = true;
         if (GetResultOfGameIfNoMovesAreAvailable(board) == Stalemate)
         {
             returnBoard.value = 0.0f;
         }
         else
         {
-            returnBoard.value = isMaximizing ? FLT_MIN : FLT_MAX;
+            // They have to be smaller than FLT_MAX since that is reserved for alpha and beta
+            returnBoard.value = isMaximizing ? -FLT_MAX / 10.0f : FLT_MAX / 10.0f;
         }
         return returnBoard;
     }
 
-    // TODO Order child nodes
-
-    // Value child nodes
-    Board followingMinimaxBoards[allPossibleMovesCount];
+    // Set their values
     for (int i = 0; i < allPossibleMovesCount; ++i)
     {
-        followingMinimaxBoards[i] = Minimax(&allPossibleMoves[i], maxDepth, depth + 1, !isMaximizing);
+        allPossibleMoves[i].value = GetBoardValue(&allPossibleMoves[i]);
     }
 
-    // Order them and pick the best one
+    // The ordering changes depending on if you want to maximize or minimize
+    if (isMaximizing)
+    {
+        qsort(allPossibleMoves, allPossibleMovesCount, sizeof(*allPossibleMoves), CompareDescendingOrder);
+    }
+    else
+    {
+        qsort(allPossibleMoves, allPossibleMovesCount, sizeof(*allPossibleMoves), CompareAscendingOrder);
+    }
+
+    // Value child nodes and pick the best one
+    Board followingMinimaxBoards[allPossibleMovesCount];
     int bestIndex = 0;
-    float bestValue = isMaximizing ? -FLT_MAX : FLT_MAX;
+    float returnBoardValue = isMaximizing ? alpha : beta;
     for (int i = 0; i < allPossibleMovesCount; ++i)
     {
-        if ((isMaximizing && followingMinimaxBoards[i].value > bestValue) || (!isMaximizing && followingMinimaxBoards[i].value < bestValue))
+        followingMinimaxBoards[i] = Minimax(&allPossibleMoves[i], alpha, beta, depthLeft - 1, !isMaximizing);
+
+        // Alpha beta pruning
+        if (isMaximizing)
         {
-            bestValue = followingMinimaxBoards[i].value;
-            bestIndex = i;
+            if (followingMinimaxBoards[i].value >= beta)
+            {
+                returnBoardValue = beta;
+                bestIndex = 0;
+                break;
+            }
+            if (followingMinimaxBoards[i].value > alpha)
+            {
+                alpha = followingMinimaxBoards[i].value;
+                returnBoardValue = alpha;
+                bestIndex = i;
+            }
+        }
+        else
+        {
+            if (followingMinimaxBoards[i].value <= alpha)
+            {
+                returnBoardValue = alpha;
+                bestIndex = 0;
+                break;
+            }
+            if (followingMinimaxBoards[i].value < beta)
+            {
+                beta = followingMinimaxBoards[i].value;
+                returnBoardValue = beta;
+                bestIndex = i;
+            }
         }
     }
 
     returnBoard = allPossibleMoves[bestIndex];
-    returnBoard.value = bestValue;
-    free(allPossibleMoves);
+    returnBoard.value = returnBoardValue;
     return returnBoard;
 }
 
-void Test()
+
+// Test functions
+void TestGenerateLeavesAtDepthFromTestBoard()
 {
+    Board newTest = InitializeTestBoard();
+    int count;
+    Board a[MAX_LEGAL_MOVES];
+    GenerateAllLegalMoves(&newTest, a, &count);
+    int leaves = 0;
+    for (int i = 0; i < count; ++i)
+    {
+        int count2;
+        Board b[MAX_LEGAL_MOVES];
+        GenerateAllLegalMoves(&a[i], b, &count2);
+        for (int j = 0; j < count2; ++j)
+        {
+            int count3;
+            Board c[MAX_LEGAL_MOVES];
+            GenerateAllLegalMoves(&b[j], c, &count3);
+            for (int k = 0; k < count3; ++k)
+            {
+                int count4;
+                Board d[MAX_LEGAL_MOVES];
+                GenerateAllLegalMoves(&c[k], d, &count4);
+                for (int l = 0; l < count4; ++l)
+                {
+                    int count5;
+                    Board e[MAX_LEGAL_MOVES];
+                    GenerateAllLegalMoves(&d[l], e, &count5);
+                    leaves += count5;
+                }
+            }
+        }
+    }
+    printf("%i\n", leaves);
+}
+
+void TestPlayingItself()
+{
+    const int depth = 6;
+    printf("TestPlayingItself with depth: %i\n\n", depth);
+
     Board board = InitializeBoard();
     PrintBoard(&board);
-    while (board.value != -FLT_MAX && board.value != FLT_MAX)
+
+    clock_t start, end;
+    double cpu_time_used;
+    start = clock();
+
+    while (!board.isGameOver)
     {
-        board = Minimax(&board, 4, 0, board.isWhiteTurn);
+        board = Minimax(&board, -FLT_MAX, FLT_MAX, depth, board.isWhiteTurn);
         PrintBoard(&board);
-        fflush(stdout);
+        printf("Round: %i - Nodes: %i\n", round++, nodes);
+        nodes = 1;
     }
+
+    // Game over
+    end = clock();
+    cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
+
     printf("Board value: %f - Result: ", GetBoardValue(&board));
     if (GetResultOfGameIfNoMovesAreAvailable(&board) == Stalemate)
     {
@@ -221,86 +327,5 @@ void Test()
         if (board.isWhiteTurn) printf("Black won!\n");
         else                   printf("White won!\n");
     }
-
-    // Test board
-    /*Board newTest = InitializeTestBoard();
-    int count;
-    Board* a = GenerateAllLegalMoves(&newTest, &count);
-    int leaves = 0;
-    for (int i = 0; i < count; ++i)
-    {
-        int count2;
-        Board* b = GenerateAllLegalMoves(&a[i], &count2);
-        for (int j = 0; j < count2; ++j)
-        {
-            int count3;
-            Board* c = GenerateAllLegalMoves(&b[j], &count3);
-            for (int k = 0; k < count3; ++k)
-            {
-                int count4;
-                Board* d = GenerateAllLegalMoves(&c[k], &count4);
-                for (int l = 0; l < count4; ++l)
-                {
-                    int count5;
-                    Board* e = GenerateAllLegalMoves(&d[l], &count5);
-                    leaves += count5;
-                }
-            }
-        }
-    }
-    printf("%i\n", leaves);*/
-
-    // First 6 moves
-    /*clock_t start, end;
-    double cpu_time_used;
-
-    start = clock();
-
-    Board startBoard = InitializeBoard();
-    int amount1;
-    Board* allMoves1 = GenerateAllLegalMoves(&startBoard, &amount1);
-    long long nodes = amount1;
-    long long leaves = 0;
-    for (int i = 0; i < amount1; ++i)
-    {
-        int amount2;
-        Board* allMoves2 = GenerateAllLegalMoves(&allMoves1[i], &amount2);
-        nodes += amount2;
-        for (int j = 0; j < amount2; ++j)
-        {
-            int amount3;
-            Board* allMoves3 = GenerateAllLegalMoves(&allMoves2[j], &amount3);
-            nodes += amount3;
-            for (int k = 0; k < amount3; ++k)
-            {
-                int amount4;
-                Board* allMoves4 = GenerateAllLegalMoves(&allMoves3[k], &amount4);
-                nodes += amount4;
-                for (int l = 0; l < amount4; ++l)
-                {
-                    int amount5;
-                    Board* allMoves5 = GenerateAllLegalMoves(&allMoves4[l], &amount5);
-                    nodes += amount5;
-                    for (int m = 0; m < amount5; ++m)
-                    {
-                        int amount6;
-                        Board* allMoves6 = GenerateAllLegalMoves(&allMoves5[m], &amount6);
-                        nodes += amount6;
-                        leaves += amount6;
-                        free(allMoves6);
-                    }
-                    free(allMoves5);
-                }
-                free(allMoves4);
-            }
-            free(allMoves3);
-        }
-        free(allMoves2);
-    }
-    free(allMoves1);
-
-    end = clock();
-    cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
-    printf("Nodes: %lli - Leaves: %lli - Time: %f\n", nodes, leaves, cpu_time_used);
-    fflush(stdout);*/
+    printf("TIME: %f\n", cpu_time_used);
 }

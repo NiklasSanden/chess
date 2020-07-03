@@ -45,6 +45,7 @@ typedef struct
     int blackKingIndex; // Init 60
     int enPassantIndex; // Init -1. There can only be one pawn that can be attacked with en passant at a time. Needs to be reset to -1 when there isn't one
     bool isWhiteTurn;   // Init true
+    bool isGameOver;    // Init false
 } Board;
 Board InitializeBoard();
 Board InitializeTestBoard();

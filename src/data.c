@@ -1,5 +1,7 @@
 #include "data.h"
 
+#include <stdlib.h>
+
 Board InitializeBoard()
 {
     Board board;
@@ -9,6 +11,7 @@ Board InitializeBoard()
     board.isWhiteTurn = true;
     board.isGameOver = false;
     board.value = 0.0f;
+    board.nextBoard = NULL;
     
     board.board[0] = WhiteUnmovedRook;
     board.board[1] = WhiteKnight;
@@ -49,6 +52,7 @@ Board InitializeTestBoard()
     board.isWhiteTurn = true;
     board.isGameOver = false;
     board.value = 0.0f;
+    board.nextBoard = NULL;
     
     // Do not make this into a loop. You are suppose to change emptysquares to test
     board.board[0] = EmptySquare;
@@ -127,6 +131,17 @@ Board InitializeTestBoard()
     board.blackKingIndex = -1;
 
     return board;
+}
+
+// Does not free the board parameter - only its nextBoard pointer. Also sets it to NULL
+void FreeRecursiveNextBoard(Board* const board)
+{
+    if (board->nextBoard)
+    {
+        FreeRecursiveNextBoard(board->nextBoard);
+        free(board->nextBoard);
+        board->nextBoard = NULL;
+    }
 }
 
 int PositionToIndex(const int x, const int y)

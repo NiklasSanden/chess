@@ -63,7 +63,7 @@ static const float QueenPositionValues[] = {
     -10,  0,  5,  0,  0,  0,  0,-10,
     -20,-10,-10, -5, -5,-10,-10,-20
 };
-static const float KingPositionValues[] = {
+static const float KingPositionValues[] = { // Added castling incentive
     -30,-40,-40,-50,-50,-40,-40,-30,
     -30,-40,-40,-50,-50,-40,-40,-30,
     -30,-40,-40,-50,-50,-40,-40,-30,
@@ -71,7 +71,7 @@ static const float KingPositionValues[] = {
     -20,-30,-30,-40,-40,-30,-30,-20,
     -10,-20,-20,-20,-20,-20,-20,-10,
      20, 20,  0,  0,  0,  0, 20, 20,
-     20, 30, 10,  0,  0, 10, 30, 20
+     30, 40, 20,  0,  0, 20, 40, 30
 };
 
 
@@ -162,15 +162,16 @@ int CompareDescendingOrder(const void* a, const void* b)
     return (valueB > valueA) - (valueB < valueA);
 }
 
-Board Minimax(const Board* const board, float alpha, float beta, const int depthLeft, const bool isMaximizing)
+// Sets the nextBoard pointer on the board parameter
+void Minimax(Board* const board, float alpha, float beta, const int depthLeft, const bool isMaximizing)
 {
-    Board returnBoard;
+    board->nextBoard = NULL;
     // Static evaluation has already been done when sorting
     if (depthLeft == 0)
     {
-        returnBoard = *board;
-        return returnBoard;
+        return;
     }
+
 
     int allPossibleMovesCount;
     Board allPossibleMoves[MAX_LEGAL_MOVES];
@@ -180,18 +181,18 @@ Board Minimax(const Board* const board, float alpha, float beta, const int depth
     // The game is over if you can't make a move (Checkmate or Stalemate)
     if (allPossibleMovesCount == 0)
     {
-        returnBoard = *board;
-        returnBoard.isGameOver = true;
+        board->isGameOver = true;
         if (GetResultOfGameIfNoMovesAreAvailable(board) == Stalemate)
         {
-            returnBoard.value = 0.0f;
+            board->value = 0.0f;
         }
         else
         {
             // They have to be smaller than FLT_MAX since that is reserved for alpha and beta
-            returnBoard.value = isMaximizing ? -FLT_MAX / 10.0f : FLT_MAX / 10.0f;
+            board->value = isMaximizing ? -FLT_MAX / 10.0f : FLT_MAX / 10.0f;
         }
-        return returnBoard;
+
+        return;
     }
 
     // Set their values
@@ -211,51 +212,94 @@ Board Minimax(const Board* const board, float alpha, float beta, const int depth
     }
 
     // Value child nodes and pick the best one
-    Board followingMinimaxBoards[allPossibleMovesCount];
     int bestIndex = 0;
-    float returnBoardValue = isMaximizing ? alpha : beta;
+    float nextBoardValue = isMaximizing ? alpha : beta;
+    int lastMinimaxIndex = 0; // Since pruning can get us out of calling Minimax
     for (int i = 0; i < allPossibleMovesCount; ++i)
     {
-        followingMinimaxBoards[i] = Minimax(&allPossibleMoves[i], alpha, beta, depthLeft - 1, !isMaximizing);
+        Minimax(&allPossibleMoves[i], alpha, beta, depthLeft - 1, !isMaximizing);
+        lastMinimaxIndex = i;
 
         // Alpha beta pruning
         if (isMaximizing)
         {
-            if (followingMinimaxBoards[i].value >= beta)
+            if (allPossibleMoves[i].value >= beta)
             {
-                returnBoardValue = beta;
+                nextBoardValue = beta;
                 bestIndex = 0;
                 break;
             }
-            if (followingMinimaxBoards[i].value > alpha)
+            if (allPossibleMoves[i].value > alpha)
             {
-                alpha = followingMinimaxBoards[i].value;
-                returnBoardValue = alpha;
+                alpha = allPossibleMoves[i].value;
+                nextBoardValue = alpha;
                 bestIndex = i;
             }
         }
         else
         {
-            if (followingMinimaxBoards[i].value <= alpha)
+            if (allPossibleMoves[i].value <= alpha)
             {
-                returnBoardValue = alpha;
+                nextBoardValue = alpha;
                 bestIndex = 0;
                 break;
             }
-            if (followingMinimaxBoards[i].value < beta)
+            if (allPossibleMoves[i].value < beta)
             {
-                beta = followingMinimaxBoards[i].value;
-                returnBoardValue = beta;
+                beta = allPossibleMoves[i].value;
+                nextBoardValue = beta;
                 bestIndex = i;
             }
         }
     }
 
-    returnBoard = allPossibleMoves[bestIndex];
-    returnBoard.value = returnBoardValue;
-    return returnBoard;
+    // Cleanup
+    for (int i = 0; i <= lastMinimaxIndex; ++i)
+    {
+        if (i == bestIndex) continue;
+        FreeRecursiveNextBoard(&allPossibleMoves[i]);
+    }
+
+    // Save next board
+    Board* nextBoard = malloc(sizeof(*nextBoard));
+    *nextBoard = allPossibleMoves[bestIndex];
+    nextBoard->value = nextBoardValue;
+
+    board->value = nextBoardValue;
+    board->nextBoard = nextBoard;
 }
 
+void GetMoveSequenceFromNextBoardPointerChain(const Board* const board, Board* const outMoveSequence, int* const outMoveSequenceCount, const int index)
+{
+    if (board->nextBoard)
+    {
+        GetMoveSequenceFromNextBoardPointerChain(board->nextBoard, outMoveSequence, outMoveSequenceCount, index + 1);
+    }
+    else
+    {
+        *outMoveSequenceCount = index + 1;
+    }
+    outMoveSequence[index] = *board;
+    outMoveSequence[index].nextBoard = NULL; // The nextBoard will be freed anyway after this copies them to the array outMoveSequence
+}
+
+// Automatically cleans
+void CallMinimaxAndGetTheMoveSequence(const Board* const board, Board* const outMoveSequence, int* const outMoveSequenceCount, const int depth, const bool isMaximizing)
+{
+    Board tempBoard = *board;
+    Minimax(&tempBoard, -FLT_MAX, FLT_MAX, depth, isMaximizing);
+
+    if (tempBoard.isGameOver)
+    {
+        outMoveSequence[0] = tempBoard;
+        *outMoveSequenceCount = 1;
+    }
+    else
+    {
+        GetMoveSequenceFromNextBoardPointerChain(tempBoard.nextBoard, outMoveSequence, outMoveSequenceCount, 0);
+        FreeRecursiveNextBoard(&tempBoard);
+    }
+}
 
 // Test functions
 void TestGenerateLeavesAtDepthFromTestBoard()
@@ -299,23 +343,35 @@ void TestPlayingItself()
     printf("TestPlayingItself with depth: %i\n\n", depth);
 
     Board board = InitializeBoard();
+    Board moveSequence[depth];
+    int moveSequenceCount;
     PrintBoard(&board);
 
     clock_t start, end;
-    double cpu_time_used;
+    clock_t moveStart, moveEnd;
+    double cpuTimeUsed;
+    double moveCpuTimeUsed;
     start = clock();
 
     while (!board.isGameOver)
     {
-        board = Minimax(&board, -FLT_MAX, FLT_MAX, depth, board.isWhiteTurn);
+        moveStart = clock();
+        
+        CallMinimaxAndGetTheMoveSequence(&board, &moveSequence[0], &moveSequenceCount, depth, board.isWhiteTurn);
+        board = moveSequence[0];
+
+        moveEnd = clock();
+        moveCpuTimeUsed = ((double)(moveEnd - moveStart)) / CLOCKS_PER_SEC;
+
+        printf("Round: %i - Nodes: %i - Value: %.1f - Static value: %.1f - Time: %.3f\n", round, nodes, board.value, GetBoardValue(&board), moveCpuTimeUsed);
         PrintBoard(&board);
-        printf("Round: %i - Nodes: %i\n", round++, nodes);
         nodes = 1;
+        ++round;
     }
 
     // Game over
     end = clock();
-    cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
+    cpuTimeUsed = ((double) (end - start)) / CLOCKS_PER_SEC;
 
     printf("Board value: %f - Result: ", GetBoardValue(&board));
     if (GetResultOfGameIfNoMovesAreAvailable(&board) == Stalemate)
@@ -327,5 +383,5 @@ void TestPlayingItself()
         if (board.isWhiteTurn) printf("Black won!\n");
         else                   printf("White won!\n");
     }
-    printf("TIME: %f\n", cpu_time_used);
+    printf("TIME: %f\n", cpuTimeUsed);
 }

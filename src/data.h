@@ -40,6 +40,7 @@ typedef enum EGameEndStatus
 typedef struct
 {
     char board[64];
+    void* nextBoard;
     float value;
     int whiteKingIndex; // Init 4
     int blackKingIndex; // Init 60
@@ -49,6 +50,7 @@ typedef struct
 } Board;
 Board InitializeBoard();
 Board InitializeTestBoard();
+void FreeRecursiveNextBoard(Board* const board);
 
 int PositionToIndex(const int x, const int y);
 void IndexToPosition(const int index, int* const outX, int* const outY);

@@ -110,7 +110,7 @@ float GetBoardValue(const Board* const board)
             break;
         case WhiteKing:
         case WhiteUnmovedKing:
-            value += KingPositionValues[i];
+            value += KingPositionValues[PositionToIndex(x, y)];
             break;
         // Black
         case BlackPawn:

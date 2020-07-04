@@ -2,7 +2,7 @@ SOURCE_PATH = /home/nick/Dev/chess/src
 
 CFLAGS = -I$(SOURCE_PATH)
 
-LFLAGS = -lraylib
+LFLAGS = -lraylib -lm
 
 SOURCE = \
 src/main.c \

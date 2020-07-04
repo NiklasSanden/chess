@@ -2,6 +2,27 @@
 
 #include <stdlib.h>
 
+Piece GetMovedPieceVersion(const Piece piece)
+{
+    switch (piece)
+    {
+    case WhiteUnmovedPawn:
+        return WhitePawn;
+    case WhiteUnmovedRook:
+        return WhiteRook;
+    case WhiteUnmovedKing:
+        return WhiteKing;
+    
+    case BlackUnmovedPawn:
+        return BlackPawn;
+    case BlackUnmovedRook:
+        return BlackRook;
+    case BlackUnmovedKing:
+        return BlackKing;
+    }
+    return piece;
+}
+
 Board InitializeBoard()
 {
     Board board;

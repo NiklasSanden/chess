@@ -29,6 +29,7 @@ typedef enum EPiece
     BlackQueen,
     BlackKing, BlackUnmovedKing,
 } Piece;
+Piece GetMovedPieceVersion(const Piece piece);
 
 // Stalemate = 0
 typedef enum EGameEndStatus

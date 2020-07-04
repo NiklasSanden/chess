@@ -147,6 +147,12 @@ float GetBoardValue(const Board* const board)
     return value;
 }
 
+// TODO Implement
+float GetDeepBoardValue(const Board* const board)
+{
+    return GetBoardValue(board);
+}
+
 int CompareAscendingOrder(const void* a, const void* b)
 {
     float valueA = (*((Board*)a)).value;
@@ -163,12 +169,16 @@ int CompareDescendingOrder(const void* a, const void* b)
 }
 
 // Sets the nextBoard pointer on the board parameter
-void Minimax(Board* const board, float alpha, float beta, const int depthLeft, const bool isMaximizing)
+void Minimax(Board* const board, float alpha, float beta, const int depthLeft, const bool isMaximizing, const bool deepLeafEvaluation)
 {
     board->nextBoard = NULL;
     // Static evaluation has already been done when sorting
     if (depthLeft == 0)
     {
+        if (deepLeafEvaluation)
+        {
+            board->value = GetDeepBoardValue(board);
+        }
         return;
     }
 
@@ -217,7 +227,7 @@ void Minimax(Board* const board, float alpha, float beta, const int depthLeft, c
     int lastMinimaxIndex = 0; // Since pruning can get us out of calling Minimax
     for (int i = 0; i < allPossibleMovesCount; ++i)
     {
-        Minimax(&allPossibleMoves[i], alpha, beta, depthLeft - 1, !isMaximizing);
+        Minimax(&allPossibleMoves[i], alpha, beta, depthLeft - 1, !isMaximizing, deepLeafEvaluation);
         lastMinimaxIndex = i;
 
         // Alpha beta pruning
@@ -284,10 +294,10 @@ void GetMoveSequenceFromNextBoardPointerChain(const Board* const board, Board* c
 }
 
 // Automatically cleans
-void CallMinimaxAndGetTheMoveSequence(const Board* const board, Board* const outMoveSequence, int* const outMoveSequenceCount, const int depth, const bool isMaximizing)
+void CallMinimaxAndGetTheMoveSequence(const Board* const board, Board* const outMoveSequence, int* const outMoveSequenceCount, const int depth, const bool isMaximizing, const bool deepLeafEvaluation)
 {
     Board tempBoard = *board;
-    Minimax(&tempBoard, -FLT_MAX, FLT_MAX, depth, isMaximizing);
+    Minimax(&tempBoard, -FLT_MAX, FLT_MAX, depth, isMaximizing, deepLeafEvaluation);
 
     if (tempBoard.isGameOver)
     {
@@ -357,7 +367,7 @@ void TestPlayingItself()
     {
         moveStart = clock();
         
-        CallMinimaxAndGetTheMoveSequence(&board, &moveSequence[0], &moveSequenceCount, depth, board.isWhiteTurn);
+        CallMinimaxAndGetTheMoveSequence(&board, &moveSequence[0], &moveSequenceCount, depth, board.isWhiteTurn, true);
         board = moveSequence[0];
 
         moveEnd = clock();

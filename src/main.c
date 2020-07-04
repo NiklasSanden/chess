@@ -1,8 +1,8 @@
-#include "ai.h"
+#include "GUI.h"
 
 int main()
 {
-    TestPlayingItself();
+    Run();
 
     return 0;
 }

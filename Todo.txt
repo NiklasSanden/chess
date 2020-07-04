@@ -1,1 +1,3 @@
 AI and Rules are completely done -> Next up is the program that will call AI and interface with the user (currently testfunctions are called in AI from main). Then onto GUI using RayLib.
+
+Implement the DeepGetBoardValue function. Currently just calls the static version.
